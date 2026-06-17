@@ -1,0 +1,25 @@
+{
+  "mode": "yolo",
+  "granularity": "standard",
+  "parallelization": true,
+  "commit_docs": true,
+  "model_profile": "quality",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "auto_advance": true
+  },
+  "planning": {
+    "managed": "manual",
+    "managed_reason": "Parent directory is itself an active GSD project; gsd-sdk anchors to the outer worktree. ha-airseekers is a standalone HACS repo, so GSD artifacts are maintained manually here and committed with plain git.",
+    "commit_docs": true
+  },
+  "project": {
+    "name": "ha-airseekers",
+    "domain": "airseekers",
+    "display_name": "AIRSEEKERS",
+    "initial_model": "TRON Max"
+  }
+}
