@@ -37,7 +37,6 @@ from .const import (
     CAP_CUTTING_HEIGHT,
     CAP_GPS,
     CAP_LOCATE,
-    CAP_MOWING_MODE,
     CAP_OBSTACLE,
     CAP_RAIN_SENSOR,
     CAP_RESET_ERROR,
@@ -375,6 +374,12 @@ class AirseekersBackend(ABC):
     async def async_set_schedule(self, device_id: str, schedule: object | None = None) -> None:
         raise AirseekersUnsupportedFeature(f"{self.name}: set schedule not supported")
 
+    async def async_locate(self, device_id: str) -> None:
+        raise AirseekersUnsupportedFeature(f"{self.name}: locate not supported")
+
+    async def async_reset_error(self, device_id: str) -> None:
+        raise AirseekersUnsupportedFeature(f"{self.name}: reset error not supported")
+
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         return []
 
@@ -419,7 +424,6 @@ class StubBackend(AirseekersBackend):
                     CAP_BATTERY,
                     CAP_ZONES,
                     CAP_CUTTING_HEIGHT,
-                    CAP_MOWING_MODE,
                     CAP_RTK,
                     CAP_GPS,
                     CAP_WIFI_RSSI,
@@ -571,6 +575,17 @@ class StubBackend(AirseekersBackend):
         self._check_device(device_id)
         # The stub accepts and discards the schedule; persisted scheduling is a future feature.
         return None
+
+    async def async_locate(self, device_id: str) -> None:
+        self._check_device(device_id)
+        _LOGGER.debug("stub backend: locate requested (simulated beep)")
+
+    async def async_reset_error(self, device_id: str) -> None:
+        self._check_device(device_id)
+        self._advance()
+        self._fault = AirseekersFault()
+        if self._state == STATE_ERROR:
+            self._state = STATE_IDLE
 
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         self._check_device(device_id)
@@ -738,6 +753,12 @@ class AirseekersClient:
 
     async def async_set_schedule(self, device_id: str, schedule: object | None = None) -> None:
         await self._impl.async_set_schedule(device_id, schedule)
+
+    async def async_locate(self, device_id: str) -> None:
+        await self._impl.async_locate(device_id)
+
+    async def async_reset_error(self, device_id: str) -> None:
+        await self._impl.async_reset_error(device_id)
 
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         return await self._impl.async_get_zones(device_id)

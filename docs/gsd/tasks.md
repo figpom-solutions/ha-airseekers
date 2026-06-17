@@ -53,8 +53,18 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] strings.json + translations/en.json + fr.json
 - [ ] Live load in a real HA instance — recommended before tagging v0.1.0 (not runnable on this box)
 
+## Phase 4 — Entity platforms ✅ (committed)
+- [x] `sensor.py` — battery, state, activity, current_zone, error_code/message, rtk_status,
+  gps_signal, wifi_rssi, blade_motor_state, total_mowing_time, total_mowing_cycles, last_update (capability-gated)
+- [x] `binary_sensor.py` — online, charging, docked, raining, error, obstacle_detected, camera_available
+- [x] `button.py` — refresh, start, pause, dock, stop, locate, reset_error
+- [x] `number.py` — cutting_height (options-overridable min/max)
+- [x] `select.py` — zone (starts zone mow), backend, camera_mode  (mowing_mode deferred: no verified backend support)
+- [x] client `async_locate` / `async_reset_error` (+ stub) for the locate/reset buttons
+- [ ] entity-name translations (en/fr) — deferred to Phase 8 polish (names are English strings for now)
+
 ## Backlog (next phases)
-- Phase 4: real entities for sensor/binary_sensor/button/number/select (capability-gated) + entity descriptions.
-- Phase 5: dynamic multi-camera entities (snapshot/live/composite, privacy options) + camera discovery tools wiring.
+- Phase 5: dynamic multi-camera entities (snapshot/live/composite, privacy options).
+- Phase 6: maintenance subsystem (Store + RestoreEntity), warranty/blade sensors+binaries+buttons+numbers, log, no-spam alerts.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

@@ -151,6 +151,17 @@ async def test_unsupported_backend_raises() -> None:
             await client.async_get_devices()
 
 
+async def test_stub_locate_and_reset_error() -> None:
+    client = _stub()
+    dev_id = await _device_id(client)
+    # locate is a no-op on the stub but must not raise.
+    await client.async_locate(dev_id)
+    # reset_error clears any fault and leaves an error state idle.
+    await client.async_reset_error(dev_id)
+    status = await client.async_get_status(dev_id)
+    assert status.has_error is False
+
+
 async def test_unknown_device_raises() -> None:
     client = _stub()
     with pytest.raises(AirseekersApiError):
