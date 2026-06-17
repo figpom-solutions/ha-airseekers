@@ -1,93 +1,120 @@
-# airseekers
+# AIRSEEKERS for Home Assistant (`ha-airseekers`)
 
+A custom Home Assistant integration for the **AIRSEEKERS TRON / TRON Max** RTK robotic lawn mower —
+control, telemetry, multi-camera viewing, and real-world maintenance tracking (warranty, blade wear,
+mowing hours/cycles, maintenance log).
 
+> **Status: early / stub-first.** The integration works **end-to-end today against a fully simulated
+> `stub` backend** so you can install it, see every entity, and build dashboards before the robot's
+> real protocol is mapped. The real backends (`local_http`, `cloud_http`, `mqtt`, RTSP camera) are
+> deliberately **not invented** — they ship as clear stubs and are completed only from
+> owner-verified protocol discovery. See [`docs/api_mapping.md`](docs/api_mapping.md).
 
-## Getting started
+## Project state
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+| Area | State |
+|------|-------|
+| Stub backend (full simulation) | ✅ functional |
+| HACS install | ✅ supported (custom repository) |
+| Local API | ❓ to discover ([`docs/api_mapping.md`](docs/api_mapping.md)) |
+| Cloud API | ❓ to discover |
+| MQTT | ❓ to confirm |
+| Cameras | ❓ to map ([`docs/camera_mapping.md`](docs/camera_mapping.md)) |
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Development is managed with GSD — see [`.planning/ROADMAP.md`](.planning/ROADMAP.md) and
+[`docs/gsd/`](docs/gsd/).
 
-## Add your files
+## Install
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### Via HACS (custom repository)
+1. HACS → ⋮ → **Custom repositories**.
+2. Add this repo's URL, category **Integration**.
+3. Install **AIRSEEKERS**, then restart Home Assistant.
+4. **Settings → Devices & Services → Add Integration → AIRSEEKERS.**
 
+> Update `documentation` / `issue_tracker` / `codeowners` in `manifest.json` to match your repo
+> before publishing.
+
+### Manual
+Copy `custom_components/airseekers/` into your Home Assistant `config/custom_components/`, then restart.
+
+## Configuration
+
+The config flow asks for a **backend** (start with `stub`), **model** (`TRON` / `TRON Max`), a device
+name, and optional host/credentials for real backends later. Everything else (polling intervals,
+camera behaviour, maintenance settings) is editable from the integration's **Configure** (options).
+
+### Use the stub backend
+Pick `stub` when adding the integration. You immediately get a mower entity, sensors, ≥5 simulated
+cameras (front/left/right/rear/360), and the full maintenance subsystem — no robot required. This is
+the recommended way to validate Home Assistant and build your dashboard.
+
+## What you get
+
+- **Mower:** start / pause / dock (+ best-effort stop), activity & battery, zone mowing where reported.
+- **Sensors / binary sensors:** battery, state, activity, zone, error, RTK/GPS, Wi-Fi RSSI, blade motor,
+  totals; online/charging/docked/raining/error/obstacle/camera-available.
+- **Controls:** refresh/dock/pause/start/stop/locate/reset-error buttons, cutting-height number, zone /
+  mode / backend / camera-mode selects.
+- **Cameras:** one entity per reported camera (dynamic), role-named, snapshot/live/composite, privacy-first.
+- **Maintenance:** warranty countdown, blade wear %, mowing hours/cycles, maintenance log, non-spam alerts.
+- **Services + a ready Lovelace dashboard** (see [`docs/dashboard.md`](docs/dashboard.md)).
+
+## Multi-camera notes
+
+The TRON family uses a multi-camera vision system. Not every physical camera is necessarily exposed to
+the user, and a robot may present **composite** views (e.g. 300°/360°) rather than raw per-lens feeds.
+The integration creates entities **only for cameras the backend actually reports**, classifies each by
+**role** and **stream type** (snapshot / MJPEG / HLS / RTSP / WebRTC / cloud / proprietary), and treats
+streams as privacy-sensitive by default. See [`docs/camera_mapping.md`](docs/camera_mapping.md).
+
+## Completing the real integration (protocol discovery)
+
+To move beyond the stub, capture how **your own** robot and the **AIRSEEKERS app on your own phone/
+account** communicate, then map endpoints to entities. Tools live in [`tools/`](tools/) and are
+**non-intrusive** (no brute force, nothing published without confirmation, secrets redacted):
+
+```bash
+# Find the robot IP from your router/DHCP, then:
+python tools/discover_lan.py
+python tools/discover_camera_streams.py --host <IP_ROBOT>
+# nmap -sV <IP_ROBOT>   # your own device only
 ```
-cd existing_repo
-git remote add origin https://git.figpom.io/figpom/airseekers.git
-git branch -M main
-git push -uf origin main
+
+Full procedure (Wireshark / mitmproxy on your own phone, DNS observation, anonymising traces, and the
+endpoint table to fill in): [`tools/README_DISCOVERY.md`](tools/README_DISCOVERY.md),
+[`tools/analyze_app_camera_calls.md`](tools/analyze_app_camera_calls.md),
+[`tools/extract_app_domains.md`](tools/extract_app_domains.md).
+
+**What to record per call:** endpoint · method · payload · response · the matching HA entity.
+Anonymise before sharing.
+
+## Security & privacy
+
+- No credentials, tokens, signed URLs, or camera stream URLs are ever logged or written to diagnostics.
+- Diagnostics are redacted via a shared helper; cameras default to no recording / no external exposure.
+- Discovery tools touch **only your own** network/devices/account. See [`docs/security.md`](docs/security.md).
+
+## Development
+
+```bash
+pip install -r requirements_test.txt
+ruff check .
+pytest
 ```
 
-## Integrate with your tools
-
-* [Set up project integrations](https://git.figpom.io/figpom/airseekers/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Python 3.12+, full async, typed. See [`docs/architecture.md`](docs/architecture.md).
 
 ## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+LAN discovery → cloud auth → mow commands → zones → map → MQTT → multi-camera → Lovelace dashboard →
+optional Frigate integration. Tracked in [`.planning/ROADMAP.md`](.planning/ROADMAP.md).
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Disclaimer
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Independent, unofficial project for interoperability with **your own** robot, network, and account.
+Not affiliated with AIRSEEKERS. Use at your own risk.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+MIT.

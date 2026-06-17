@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test / coverage / type caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+
+# Secrets & local config — NEVER commit credentials, tokens, captures
+.env
+.env.*
+!.env.example
+secrets.yaml
+*.pem
+*.key
+captures/
+*.pcap
+*.pcapng
+*.har
+
+# Discovery tool reports (may contain network/host details)
+tools/reports/
+*_report.md
+!tools/README_DISCOVERY.md
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
