@@ -31,8 +31,20 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - HACS custom-repo install needs a **GitHub** mirror (origin is self-hosted GitLab); manual install works now.
 - `__init__.py` is a placeholder — the integration is not yet loadable in HA (Phase 3 delivers setup).
 
+## Phase 2 — Async API Client & Working Stub Backend ✅ (committed)
+- [x] `api.py`: exceptions (auth/connection/api/unsupported/camera) + typed models
+  (Device/Status/Zone/Fault/CameraInfo/Warranty/Blade/Maintenance)
+- [x] `AirseekersClient` full method surface dispatching to a backend
+- [x] `StubBackend` fully functional (state machine, zones, ≥5 cameras incl composite_360,
+  distinct PNG snapshots, cutting-height bounds, enable/disable cameras)
+- [x] Skeleton backends (local_http/cloud_http/mqtt/rtsp) raise AirseekersUnsupportedFeature — no invented endpoints
+- [x] Pure compute helpers: `AirseekersWarrantyState.compute`, `AirseekersBladeState.compute`
+- [x] `tests/conftest.py` + `tests/test_api.py`; verified locally via HA const shim
+
 ## Backlog (next phases)
-- Phase 2: `api.py` (models, exceptions, client, backends incl. working stub) + client tests.
-- Phase 3: `__init__.py`, `coordinator.py`, `config_flow.py`, `lawn_mower.py`, `diagnostics.py`.
+- Phase 3: `redact.py`, `coordinator.py`, real `__init__.py` (setup/unload), `config_flow.py`
+  (config+options+reauth), `entity.py` base, `lawn_mower.py`, `diagnostics.py`.
+  Remember verified API facts: coordinator needs `config_entry=`; OptionsFlow must not set
+  `config_entry` in `__init__`; no native lawn-mower STOP feature.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

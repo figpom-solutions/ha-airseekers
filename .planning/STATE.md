@@ -5,11 +5,11 @@
 See: `.planning/PROJECT.md` (updated 2026-06-17)
 
 **Core value:** Install via HACS → add the robot → fully working HA device on the stub backend, before the real protocol is mapped.
-**Current focus:** Phase 1 — Foundation, Repo Skeleton & Discovery Tooling
+**Current focus:** Phase 3 — Home Assistant Core Integration (coordinator, flows, lawn_mower, diagnostics)
 
 ## Status
 
-- **Phase:** 1 of 8 (in progress)
+- **Phase:** Phases 1–2 done; Phase 3 next (of 8)
 - **Mode:** YOLO + quality agents (research / plan-check / verifier on); model profile: quality
 - **GSD management:** manual (parent dir is an active GSD project; `gsd-sdk` anchors to the outer worktree)
 - **Backend in use:** `stub` (real backends UNVERIFIED)
@@ -19,6 +19,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-17)
 - 2026-06-17 — Initialized standalone git repo for the HACS integration.
 - 2026-06-17 — Created GSD planning docs (PROJECT, REQUIREMENTS, ROADMAP, STATE, config) manually.
 - 2026-06-17 — Launched research agents for AIRSEEKERS protocol reality and HA integration API surface (→ docs/api_mapping.md, docs/camera_mapping.md, docs/architecture.md).
+- 2026-06-17 — Phase 1 committed (skeleton + discovery tools). Added GitHub remote, pushed main to github.com/figpom-solutions/ha-airseekers.
+- 2026-06-17 — Phase 2 committed: api.py (models, exceptions, AirseekersClient, fully functional stub backend + skeleton backends) and tests/test_api.py. Stub + warranty/blade math verified locally via HA shim.
 
 ## Open Questions / Unknowns
 
