@@ -1,0 +1,67 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AIRSEEKERS",
+        "description": "Ajoutez votre robot AIRSEEKERS. Commencez avec le backend « stub » pour tout valider sans connexion réelle. Les vrais backends (cloud_http, local_http, mqtt) seront complétés plus tard après découverte protocolaire vérifiée.",
+        "data": {
+          "backend": "Backend",
+          "model": "Modèle",
+          "device_name": "Nom de l'appareil",
+          "host": "IP / hôte du robot (optionnel)",
+          "username": "E-mail du compte (optionnel)",
+          "password": "Mot de passe du compte (optionnel)",
+          "prefer_local": "Préférer la connexion locale si disponible",
+          "enable_camera_entities": "Activer les entités caméra",
+          "enable_maintenance_sensors": "Activer les capteurs de maintenance"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Ré-authentifier AIRSEEKERS",
+        "description": "Votre session AIRSEEKERS a expiré. Saisissez à nouveau les identifiants de votre compte.",
+        "data": {
+          "username": "E-mail du compte",
+          "password": "Mot de passe du compte"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Identifiants invalides.",
+      "cannot_connect": "Impossible de se connecter au backend.",
+      "backend_not_ready": "Ce backend n'est pas encore implémenté. Utilisez le backend « stub » pour l'instant (voir docs/api_mapping.md).",
+      "unknown": "Erreur inattendue."
+    },
+    "abort": {
+      "already_configured": "Ce robot est déjà configuré.",
+      "reauth_successful": "Ré-authentification réussie."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options AIRSEEKERS",
+        "description": "Ajustez l'interrogation, les caméras et la maintenance. Note : avec les backends cloud, une seule session par compte existe — une interrogation trop fréquente peut déconnecter l'app mobile.",
+        "data": {
+          "backend": "Backend",
+          "poll_active_interval": "Intervalle d'interrogation en activité (secondes)",
+          "poll_idle_interval": "Intervalle d'interrogation à l'arrêt/sur base (secondes)",
+          "prefer_local": "Préférer la connexion locale si disponible",
+          "enable_camera_entities": "Activer les entités caméra",
+          "enable_all_cameras": "Activer toutes les caméras (pas seulement les rôles préférés)",
+          "privacy_mode": "Mode privé (ne pas exposer les images caméra)",
+          "disable_cameras_when_docked": "Désactiver les caméras sur la base",
+          "disable_cameras_at_night": "Désactiver les caméras la nuit",
+          "camera_discovery_mode": "Mode de découverte des caméras",
+          "enable_maintenance_sensors": "Activer les capteurs de maintenance",
+          "warranty_months": "Durée de garantie (mois)",
+          "warranty_warning_days": "Alerter avant fin de garantie (jours)",
+          "blade_lifetime_hours": "Durée de vie des lames (heures)",
+          "blade_warning_percent": "Alerter quand la vie des lames passe sous (%)",
+          "cutting_height_min": "Hauteur de coupe minimale (mm)",
+          "cutting_height_max": "Hauteur de coupe maximale (mm)",
+          "enable_raw_command": "Activer le service de commande brute (avancé)"
+        }
+      }
+    }
+  }
+}

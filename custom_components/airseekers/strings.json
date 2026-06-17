@@ -1,0 +1,67 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "AIRSEEKERS",
+        "description": "Add your AIRSEEKERS robot. Start with the 'stub' backend to validate everything without a real connection. Real backends (cloud_http, local_http, mqtt) are completed later from verified protocol discovery.",
+        "data": {
+          "backend": "Backend",
+          "model": "Model",
+          "device_name": "Device name",
+          "host": "Robot IP / host (optional)",
+          "username": "Account email (optional)",
+          "password": "Account password (optional)",
+          "prefer_local": "Prefer local connection when available",
+          "enable_camera_entities": "Enable camera entities",
+          "enable_maintenance_sensors": "Enable maintenance sensors"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate AIRSEEKERS",
+        "description": "Your AIRSEEKERS session has expired. Enter your account credentials again.",
+        "data": {
+          "username": "Account email",
+          "password": "Account password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid credentials.",
+      "cannot_connect": "Could not connect to the backend.",
+      "backend_not_ready": "This backend is not implemented yet. Use the 'stub' backend for now (see docs/api_mapping.md).",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This robot is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "AIRSEEKERS options",
+        "description": "Adjust polling, cameras, and maintenance settings. Note: with cloud backends a single session per account exists — short polling can log the phone app out.",
+        "data": {
+          "backend": "Backend",
+          "poll_active_interval": "Polling interval when active (seconds)",
+          "poll_idle_interval": "Polling interval when idle/docked (seconds)",
+          "prefer_local": "Prefer local connection when available",
+          "enable_camera_entities": "Enable camera entities",
+          "enable_all_cameras": "Enable all cameras (not only preferred roles)",
+          "privacy_mode": "Privacy mode (do not expose camera images)",
+          "disable_cameras_when_docked": "Disable cameras when docked",
+          "disable_cameras_at_night": "Disable cameras at night",
+          "camera_discovery_mode": "Camera discovery mode",
+          "enable_maintenance_sensors": "Enable maintenance sensors",
+          "warranty_months": "Warranty duration (months)",
+          "warranty_warning_days": "Warn before warranty end (days)",
+          "blade_lifetime_hours": "Blade lifetime (hours)",
+          "blade_warning_percent": "Warn when blade life below (%)",
+          "cutting_height_min": "Minimum cutting height (mm)",
+          "cutting_height_max": "Maximum cutting height (mm)",
+          "enable_raw_command": "Enable raw debug command service (advanced)"
+        }
+      }
+    }
+  }
+}

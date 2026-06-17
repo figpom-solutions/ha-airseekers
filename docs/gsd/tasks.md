@@ -41,10 +41,20 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] Pure compute helpers: `AirseekersWarrantyState.compute`, `AirseekersBladeState.compute`
 - [x] `tests/conftest.py` + `tests/test_api.py`; verified locally via HA const shim
 
+## Phase 3 — Home Assistant Core Integration ✅ (committed)
+- [x] `redact.py` reusable redaction (keys, Authorization, tokenised/signed URLs) — tested locally
+- [x] `coordinator.py` adaptive polling (active/idle), `config_entry=`, reauth via ConfigEntryAuthFailed
+- [x] `entity.py` base (CoordinatorEntity + DeviceInfo + availability)
+- [x] real `__init__.py` (setup/unload, runtime_data, login, options-reload listener)
+- [x] `config_flow.py` config + options + reauth (OptionsFlow w/o setting config_entry)
+- [x] `lawn_mower.py` (START_MOWING|PAUSE|DOCK; activity map; stop is button/service later)
+- [x] `diagnostics.py` (redacted; camera stream/snapshot URLs dropped)
+- [x] platform stubs sensor/binary_sensor/button/number/select/camera (no-op setup, fill later)
+- [x] strings.json + translations/en.json + fr.json
+- [ ] Live load in a real HA instance — recommended before tagging v0.1.0 (not runnable on this box)
+
 ## Backlog (next phases)
-- Phase 3: `redact.py`, `coordinator.py`, real `__init__.py` (setup/unload), `config_flow.py`
-  (config+options+reauth), `entity.py` base, `lawn_mower.py`, `diagnostics.py`.
-  Remember verified API facts: coordinator needs `config_entry=`; OptionsFlow must not set
-  `config_entry` in `__init__`; no native lawn-mower STOP feature.
+- Phase 4: real entities for sensor/binary_sensor/button/number/select (capability-gated) + entity descriptions.
+- Phase 5: dynamic multi-camera entities (snapshot/live/composite, privacy options) + camera discovery tools wiring.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

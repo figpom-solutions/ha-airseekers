@@ -5,11 +5,11 @@
 See: `.planning/PROJECT.md` (updated 2026-06-17)
 
 **Core value:** Install via HACS → add the robot → fully working HA device on the stub backend, before the real protocol is mapped.
-**Current focus:** Phase 3 — Home Assistant Core Integration (coordinator, flows, lawn_mower, diagnostics)
+**Current focus:** Phase 4 — Entity platforms (sensor / binary_sensor / button / number / select)
 
 ## Status
 
-- **Phase:** Phases 1–2 done; Phase 3 next (of 8)
+- **Phase:** Phases 1–3 done; Phase 4 next (of 8)
 - **Mode:** YOLO + quality agents (research / plan-check / verifier on); model profile: quality
 - **GSD management:** manual (parent dir is an active GSD project; `gsd-sdk` anchors to the outer worktree)
 - **Backend in use:** `stub` (real backends UNVERIFIED)
@@ -21,6 +21,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-17)
 - 2026-06-17 — Launched research agents for AIRSEEKERS protocol reality and HA integration API surface (→ docs/api_mapping.md, docs/camera_mapping.md, docs/architecture.md).
 - 2026-06-17 — Phase 1 committed (skeleton + discovery tools). Added GitHub remote, pushed main to github.com/figpom-solutions/ha-airseekers.
 - 2026-06-17 — Phase 2 committed: api.py (models, exceptions, AirseekersClient, fully functional stub backend + skeleton backends) and tests/test_api.py. Stub + warranty/blade math verified locally via HA shim.
+- 2026-06-17 — Phase 3 committed: redact.py, coordinator.py (adaptive polling, config_entry=, reauth), entity.py, real __init__.py (setup/unload + options reload), config_flow.py (config+options+reauth), lawn_mower.py, diagnostics.py, platform stubs (sensor/binary_sensor/button/number/select/camera), strings.json + translations (en/fr). Redaction verified locally; HA-runtime modules compile and follow verified current HA APIs (full pytest pending in HA env).
 
 ## Open Questions / Unknowns
 
