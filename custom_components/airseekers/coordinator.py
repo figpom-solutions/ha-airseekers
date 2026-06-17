@@ -73,12 +73,15 @@ class AirseekersDataUpdateCoordinator(DataUpdateCoordinator[AirseekersData]):
     ) -> None:
         self.client = client
         self._device: AirseekersDevice | None = None
+        # Read the initial interval from `entry` directly: self.config_entry is only set by
+        # super().__init__(), so the _active_interval property is not usable yet here.
+        initial_interval = int(entry.options.get(CONF_POLL_ACTIVE, DEFAULT_POLL_ACTIVE))
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
             config_entry=entry,  # required (HA 2026.8+)
-            update_interval=timedelta(seconds=self._active_interval),
+            update_interval=timedelta(seconds=initial_interval),
         )
 
     @property
