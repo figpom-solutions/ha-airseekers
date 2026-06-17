@@ -16,9 +16,17 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 
-from .const import CAP_BATTERY, CAP_CAMERAS, CAP_OBSTACLE, CAP_RAIN_SENSOR
+from .const import (
+    CAP_BATTERY,
+    CAP_CAMERAS,
+    CAP_OBSTACLE,
+    CAP_RAIN_SENSOR,
+    CONF_ENABLE_MAINTENANCE_SENSORS,
+    DEFAULT_ENABLE_MAINTENANCE_SENSORS,
+)
 from .coordinator import AirseekersConfigEntry, AirseekersData, AirseekersDataUpdateCoordinator
 from .entity import AirseekersEntity
+from .maintenance import build_maintenance_binary_sensors
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -87,11 +95,17 @@ async def async_setup_entry(
     """Set up binary sensors for the supported capabilities."""
     coordinator = entry.runtime_data.coordinator
     device = coordinator.data.device
-    async_add_entities(
+    entities: list[BinarySensorEntity] = [
         AirseekersBinarySensor(coordinator, description)
         for description in BINARY_SENSORS
         if description.capability is None or device.supports(description.capability)
-    )
+    ]
+    maintenance = entry.runtime_data.maintenance
+    if maintenance and entry.options.get(
+        CONF_ENABLE_MAINTENANCE_SENSORS, DEFAULT_ENABLE_MAINTENANCE_SENSORS
+    ):
+        entities.extend(build_maintenance_binary_sensors(coordinator, maintenance))
+    async_add_entities(entities)
 
 
 class AirseekersBinarySensor(AirseekersEntity, BinarySensorEntity):

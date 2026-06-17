@@ -19,9 +19,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 
 from .api import AirseekersError, AirseekersUnsupportedFeature
-from .const import CAP_LOCATE, CAP_RESET_ERROR, CAP_STOP
+from .const import (
+    CAP_LOCATE,
+    CAP_RESET_ERROR,
+    CAP_STOP,
+    CONF_ENABLE_MAINTENANCE_SENSORS,
+    DEFAULT_ENABLE_MAINTENANCE_SENSORS,
+)
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
 from .entity import AirseekersEntity
+from .maintenance import build_maintenance_buttons
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -87,11 +94,17 @@ async def async_setup_entry(
     """Set up control buttons for the supported capabilities."""
     coordinator = entry.runtime_data.coordinator
     device = coordinator.data.device
-    async_add_entities(
+    entities: list[ButtonEntity] = [
         AirseekersButton(coordinator, description)
         for description in BUTTONS
         if description.capability is None or device.supports(description.capability)
-    )
+    ]
+    maintenance = entry.runtime_data.maintenance
+    if maintenance and entry.options.get(
+        CONF_ENABLE_MAINTENANCE_SENSORS, DEFAULT_ENABLE_MAINTENANCE_SENSORS
+    ):
+        entities.extend(build_maintenance_buttons(coordinator, maintenance))
+    async_add_entities(entities)
 
 
 class AirseekersButton(AirseekersEntity, ButtonEntity):

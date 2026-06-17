@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 import logging
+from typing import TYPE_CHECKING
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -29,6 +30,9 @@ from .const import (
     DOMAIN,
 )
 
+if TYPE_CHECKING:
+    from .maintenance import MaintenanceManager
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -48,6 +52,7 @@ class AirseekersRuntimeData:
 
     client: AirseekersClient
     coordinator: AirseekersDataUpdateCoordinator
+    maintenance: MaintenanceManager | None = None
 
 
 # Typed config entry alias (HA 2024.11+ pattern). Plain assignment (not PEP 695 `type`) keeps the

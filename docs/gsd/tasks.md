@@ -72,8 +72,17 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [ ] camera entity tests (snapshot-only/live/composite/privacy) — Phase 8 (needs HA harness)
 - [ ] runtime addition of NEW cameras appearing after setup — future enhancement (stub set is static)
 
+## Phase 6 — Maintenance, warranty & blade wear ✅ (committed)
+- [x] `maintenance.py` MaintenanceManager (Store persistence; blade baseline runtime; warranty/blade/maintenance compute; next-change estimate; log; anti-spam re-arming notifications)
+- [x] maintenance sensors (warranty end/days/status, blade runtime/percent/status, last/next blade change, maintenance status)
+- [x] maintenance binary sensors (warranty expiring soon/expired, blades need replacement, maintenance required)
+- [x] maintenance buttons (reset blade timer, mark blades changed, reset alert, export log)
+- [x] maintenance numbers (blade lifetime hours, warranty warning days, blade warning percent)
+- [x] wired into __init__ (manager) + 4 platforms; alerts re-evaluated each coordinator tick
+- [ ] maintenance tests (warranty math edge cases, restore, no-spam) — Phase 8 (HA harness)
+
 ## Backlog (next phases)
-- Phase 6: maintenance subsystem (Store + RestoreEntity), warranty/blade sensors+binaries+buttons+numbers, log, no-spam alerts.
-- Phase 7: services.yaml + handlers (control + maintenance + guarded raw debug) + Lovelace dashboard + automations.
+- Phase 7: services.yaml + handlers (control + maintenance + guarded raw debug), entity/device targeting, Lovelace dashboard + example automations (docs/dashboard.md, docs/maintenance.md, docs/security.md).
+- Phase 8: full pytest suite, ruff/mypy, README/doc polish, entity-name translations, final quality gate.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

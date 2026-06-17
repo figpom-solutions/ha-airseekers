@@ -32,9 +32,12 @@ from .const import (
     CAP_RTK,
     CAP_WIFI_RSSI,
     CAP_ZONES,
+    CONF_ENABLE_MAINTENANCE_SENSORS,
+    DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersData, AirseekersDataUpdateCoordinator
 from .entity import AirseekersEntity
+from .maintenance import build_maintenance_sensors
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -146,11 +149,17 @@ async def async_setup_entry(
     """Set up robot sensors for the supported capabilities."""
     coordinator = entry.runtime_data.coordinator
     device = coordinator.data.device
-    async_add_entities(
+    entities: list[SensorEntity] = [
         AirseekersSensor(coordinator, description)
         for description in SENSORS
         if description.capability is None or device.supports(description.capability)
-    )
+    ]
+    maintenance = entry.runtime_data.maintenance
+    if maintenance and entry.options.get(
+        CONF_ENABLE_MAINTENANCE_SENSORS, DEFAULT_ENABLE_MAINTENANCE_SENSORS
+    ):
+        entities.extend(build_maintenance_sensors(coordinator, maintenance))
+    async_add_entities(entities)
 
 
 class AirseekersSensor(AirseekersEntity, SensorEntity):

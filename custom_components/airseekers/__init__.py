@@ -30,6 +30,7 @@ from .coordinator import (
     AirseekersDataUpdateCoordinator,
     AirseekersRuntimeData,
 )
+from .maintenance import MaintenanceManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,10 +73,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: AirseekersConfigEntry) -
         await client.async_close()
         raise
 
-    entry.runtime_data = AirseekersRuntimeData(client=client, coordinator=coordinator)
+    maintenance = MaintenanceManager(hass, entry, coordinator)
+    await maintenance.async_initialize()
+    entry.runtime_data = AirseekersRuntimeData(
+        client=client, coordinator=coordinator, maintenance=maintenance
+    )
+
+    # Re-evaluate maintenance alerts on every coordinator update (uses live mowing counters).
+    entry.async_on_unload(
+        coordinator.async_add_listener(
+            lambda: hass.async_create_task(maintenance.async_evaluate_alerts())
+        )
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_on_update))
+    await maintenance.async_evaluate_alerts()
     return True
 
 

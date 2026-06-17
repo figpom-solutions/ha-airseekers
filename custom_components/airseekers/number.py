@@ -16,11 +16,14 @@ from .const import (
     CAP_CUTTING_HEIGHT,
     CONF_CUTTING_HEIGHT_MAX,
     CONF_CUTTING_HEIGHT_MIN,
+    CONF_ENABLE_MAINTENANCE_SENSORS,
     DEFAULT_CUTTING_HEIGHT_MAX,
     DEFAULT_CUTTING_HEIGHT_MIN,
+    DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
 from .entity import AirseekersEntity
+from .maintenance import build_maintenance_numbers
 
 
 async def async_setup_entry(
@@ -28,12 +31,18 @@ async def async_setup_entry(
     entry: AirseekersConfigEntry,
     async_add_entities,
 ) -> None:
-    """Set up the cutting-height number if supported."""
+    """Set up the cutting-height number and maintenance threshold numbers."""
     coordinator = entry.runtime_data.coordinator
     device = coordinator.data.device
-    if not device.supports(CAP_CUTTING_HEIGHT):
-        return
-    async_add_entities([AirseekersCuttingHeightNumber(coordinator, entry)])
+    entities: list[NumberEntity] = []
+    if device.supports(CAP_CUTTING_HEIGHT):
+        entities.append(AirseekersCuttingHeightNumber(coordinator, entry))
+    maintenance = entry.runtime_data.maintenance
+    if maintenance and entry.options.get(
+        CONF_ENABLE_MAINTENANCE_SENSORS, DEFAULT_ENABLE_MAINTENANCE_SENSORS
+    ):
+        entities.extend(build_maintenance_numbers(coordinator, maintenance))
+    async_add_entities(entities)
 
 
 class AirseekersCuttingHeightNumber(AirseekersEntity, NumberEntity):
