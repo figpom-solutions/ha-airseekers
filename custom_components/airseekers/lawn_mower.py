@@ -25,7 +25,7 @@ from .const import (
     STATE_RETURNING,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,6 +64,7 @@ class AirseekersLawnMower(AirseekersEntity, LawnMowerEntity):
     def __init__(self, coordinator: AirseekersDataUpdateCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{self._device_id}_lawn_mower"
+        self.entity_id = build_entity_id("lawn_mower")  # lawn_mower.tron
 
     @property
     def activity(self) -> LawnMowerActivity | None:

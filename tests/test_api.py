@@ -162,6 +162,25 @@ async def test_stub_locate_and_reset_error() -> None:
     assert status.has_error is False
 
 
+async def test_stub_position_safety_area_and_mowing_mode() -> None:
+    client = _stub()
+    dev = (await client.async_get_devices())[0]
+    dev_id = dev.device_id
+    for cap in (const.CAP_POSITION, const.CAP_SAFETY, const.CAP_AREA, const.CAP_MOWING_MODE):
+        assert dev.supports(cap)
+
+    status = await client.async_get_status(dev_id)
+    assert status.latitude is not None and status.longitude is not None
+    assert status.lifted is False and status.tilted is False and status.blade_blocked is False
+    assert status.area_mowed_m2 is not None
+    assert status.mowing_mode == "auto"
+
+    await client.async_set_mowing_mode(dev_id, "edge")
+    assert (await client.async_get_status(dev_id)).mowing_mode == "edge"
+    with pytest.raises(AirseekersApiError):
+        await client.async_set_mowing_mode(dev_id, "not-a-mode")
+
+
 async def test_unknown_device_raises() -> None:
     client = _stub()
     with pytest.raises(AirseekersApiError):

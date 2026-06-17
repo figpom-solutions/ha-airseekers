@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 import logging
 import struct
 import time
@@ -35,9 +35,13 @@ from .const import (
     CAP_BLADE_MOTOR,
     CAP_CAMERAS,
     CAP_CUTTING_HEIGHT,
+    CAP_AREA,
     CAP_GPS,
     CAP_LOCATE,
+    CAP_MOWING_MODE,
     CAP_OBSTACLE,
+    CAP_POSITION,
+    CAP_SAFETY,
     CAP_RAIN_SENSOR,
     CAP_RESET_ERROR,
     CAP_RTK,
@@ -48,9 +52,10 @@ from .const import (
     DEFAULT_BLADE_WARNING_PERCENT,
     DEFAULT_CUTTING_HEIGHT_MAX,
     DEFAULT_CUTTING_HEIGHT_MIN,
+    DEFAULT_MOWING_MODE,
     DEFAULT_WARRANTY_MONTHS,
     DEFAULT_WARRANTY_WARNING_DAYS,
-    MAINTENANCE_DUE,
+    MOWING_MODES,
     MAINTENANCE_OK,
     MODEL_TRON_MAX,
     ROLE_COMPOSITE_360,
@@ -63,7 +68,6 @@ from .const import (
     STATE_ERROR,
     STATE_IDLE,
     STATE_MOWING,
-    STATE_OFFLINE,
     STATE_PAUSED,
     STATE_RETURNING,
     STREAM_SNAPSHOT,
@@ -277,12 +281,20 @@ class AirseekersStatus:
     returning: bool = False
     raining: bool | None = None
     obstacle_detected: bool | None = None
+    lifted: bool | None = None
+    tilted: bool | None = None
+    blade_blocked: bool | None = None
     blade_motor_on: bool | None = None
     current_zone: str | None = None
+    mowing_mode: str | None = None
     rtk_status: str | None = None
     gps_signal: int | None = None
     wifi_rssi: int | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    gps_accuracy: float | None = None
     cutting_height_mm: int | None = None
+    area_mowed_m2: float | None = None
     total_mowing_time_hours: float = 0.0
     total_cycles: int = 0
     fault: AirseekersFault = field(default_factory=AirseekersFault)
@@ -374,6 +386,9 @@ class AirseekersBackend(ABC):
     async def async_set_schedule(self, device_id: str, schedule: object | None = None) -> None:
         raise AirseekersUnsupportedFeature(f"{self.name}: set schedule not supported")
 
+    async def async_set_mowing_mode(self, device_id: str, mode: str) -> None:
+        raise AirseekersUnsupportedFeature(f"{self.name}: set mowing mode not supported")
+
     async def async_locate(self, device_id: str) -> None:
         raise AirseekersUnsupportedFeature(f"{self.name}: locate not supported")
 
@@ -429,12 +444,16 @@ class StubBackend(AirseekersBackend):
                     CAP_BATTERY,
                     CAP_ZONES,
                     CAP_CUTTING_HEIGHT,
+                    CAP_MOWING_MODE,
                     CAP_RTK,
                     CAP_GPS,
+                    CAP_POSITION,
+                    CAP_AREA,
                     CAP_WIFI_RSSI,
                     CAP_BLADE_MOTOR,
                     CAP_RAIN_SENSOR,
                     CAP_OBSTACLE,
+                    CAP_SAFETY,
                     CAP_CAMERAS,
                     CAP_LOCATE,
                     CAP_RESET_ERROR,
@@ -450,6 +469,12 @@ class StubBackend(AirseekersBackend):
         self._total_mowing_hours = 12.5
         self._total_cycles = 7
         self._blade_runtime_hours = 12.5
+        self._mowing_mode = DEFAULT_MOWING_MODE
+        self._area_mowed_m2 = 1240.0
+        # A plausible starting position (offset deterministically while mowing).
+        self._lat = 48.8566
+        self._lon = 2.3522
+        self._tick_count = 0
         self._fault = AirseekersFault()
         self._dock_eta: float = 0.0  # monotonic deadline for RETURNING -> DOCKED
         self._last_tick = time.monotonic()
@@ -485,6 +510,11 @@ class StubBackend(AirseekersBackend):
             self._battery = max(0.0, self._battery - elapsed * (8.0 / 3600.0) * 100 / 100)
             self._total_mowing_hours += hours
             self._blade_runtime_hours += hours
+            # ~3 m²/min mowing rate, and a small deterministic wander in position.
+            self._area_mowed_m2 += elapsed * (3.0 / 60.0)
+            self._tick_count += 1
+            self._lat += 0.00001 * ((self._tick_count % 5) - 2)
+            self._lon += 0.00001 * ((self._tick_count % 3) - 1)
             if self._battery <= 15.0:
                 self._state = STATE_RETURNING
                 self._dock_eta = now + 20.0
@@ -529,12 +559,20 @@ class StubBackend(AirseekersBackend):
             returning=self._state == STATE_RETURNING,
             raining=False,
             obstacle_detected=False,
+            lifted=False,
+            tilted=False,
+            blade_blocked=False,
             blade_motor_on=self._state == STATE_MOWING,
             current_zone=self._current_zone,
+            mowing_mode=self._mowing_mode,
             rtk_status="fixed",
             gps_signal=98,
             wifi_rssi=-54,
+            latitude=round(self._lat, 6),
+            longitude=round(self._lon, 6),
+            gps_accuracy=0.02,
             cutting_height_mm=self._cutting_height,
+            area_mowed_m2=round(self._area_mowed_m2, 1),
             total_mowing_time_hours=round(self._total_mowing_hours, 2),
             total_cycles=self._total_cycles,
             fault=replace(self._fault),
@@ -580,6 +618,12 @@ class StubBackend(AirseekersBackend):
         self._check_device(device_id)
         # The stub accepts and discards the schedule; persisted scheduling is a future feature.
         return None
+
+    async def async_set_mowing_mode(self, device_id: str, mode: str) -> None:
+        self._check_device(device_id)
+        if mode not in MOWING_MODES:
+            raise AirseekersApiError(f"unknown mowing mode: {mode!r}")
+        self._mowing_mode = mode
 
     async def async_locate(self, device_id: str) -> None:
         self._check_device(device_id)
@@ -766,6 +810,9 @@ class AirseekersClient:
 
     async def async_set_schedule(self, device_id: str, schedule: object | None = None) -> None:
         await self._impl.async_set_schedule(device_id, schedule)
+
+    async def async_set_mowing_mode(self, device_id: str, mode: str) -> None:
+        await self._impl.async_set_mowing_mode(device_id, mode)
 
     async def async_locate(self, device_id: str) -> None:
         await self._impl.async_locate(device_id)

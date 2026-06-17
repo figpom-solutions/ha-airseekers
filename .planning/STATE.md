@@ -28,6 +28,8 @@ See: `.planning/PROJECT.md` (updated 2026-06-17)
 - 2026-06-18 — Phase 7 committed: services.py + services.yaml (10 services: refresh, start_zone, set_cutting_height, send_command_raw [guarded], set_purchase_date, set_warranty_duration, mark_blades_changed, add_maintenance_event, reset_maintenance_counters, export_maintenance_log [response]). Services registered in __init__, removed on last unload. client.async_send_command_raw added (+ stub). Docs: dashboard.md (Lovelace + 7 automations), maintenance.md, security.md.
 - 2026-06-18 — Phase 8 committed: pytest suite (config_flow/options/reauth, init setup/unload, entities, camera snapshot/composite/privacy, diagnostics redaction, maintenance warranty/blade/log/no-spam). GitHub Actions CI (ruff + ruff format + pytest + hassfest + HACS). README dev/CI note. MILESTONE COMPLETE — all 8 phases done.
 
+- 2026-06-18 — Phase 9 (stable entity convention): forced deterministic `tron_*` entity_ids for every entity (via explicit entity_id + helper `build_entity_id`), kept stable across versions by unique_id. Added device_tracker.tron (GPS/RTK), switch.tron_camera_privacy & switch.tron_night_mowing, safety binary_sensors (lifted/tilted/blade_blocked), sensor.tron_firmware & sensor.tron_area, button.tron_find, select.tron_mowing_mode (re-added; stub now supports modes + position + area + safety). New platforms DEVICE_TRACKER, SWITCH. Delivered lovelace/airseekers_tron_dashboard.yaml. Tests updated to tron_* ids; api/const smokes pass.
+
 ## Next (post-milestone)
 - Let CI run on GitHub (real quality gate). Fix any ruff/test findings it surfaces.
 - Live stub-mode smoke in a real HA instance → tag v0.1.0.

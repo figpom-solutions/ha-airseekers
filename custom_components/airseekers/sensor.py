@@ -20,12 +20,14 @@ from homeassistant.const import (
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
+    UnitOfArea,
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import StateType
 
 from .const import (
+    CAP_AREA,
     CAP_BATTERY,
     CAP_BLADE_MOTOR,
     CAP_GPS,
@@ -36,7 +38,7 @@ from .const import (
     DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersData, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 from .maintenance import build_maintenance_sensors
 
 
@@ -59,20 +61,29 @@ SENSORS: tuple[AirseekersSensorEntityDescription, ...] = (
         value_fn=lambda d: d.status.battery_level,
     ),
     AirseekersSensorEntityDescription(
-        key="state",
-        name="State",
+        key="status",
+        name="Status",
         value_fn=lambda d: d.status.state,
     ),
     AirseekersSensorEntityDescription(
-        key="activity",
-        name="Activity",
-        value_fn=lambda d: d.status.state,
-    ),
-    AirseekersSensorEntityDescription(
-        key="current_zone",
+        key="zone",
         name="Current zone",
         capability=CAP_ZONES,
         value_fn=lambda d: d.status.current_zone,
+    ),
+    AirseekersSensorEntityDescription(
+        key="area",
+        name="Area mowed",
+        native_unit_of_measurement=UnitOfArea.SQUARE_METERS,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        capability=CAP_AREA,
+        value_fn=lambda d: d.status.area_mowed_m2,
+    ),
+    AirseekersSensorEntityDescription(
+        key="firmware",
+        name="Firmware",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.device.firmware,
     ),
     AirseekersSensorEntityDescription(
         key="error_code",
@@ -87,14 +98,14 @@ SENSORS: tuple[AirseekersSensorEntityDescription, ...] = (
         value_fn=lambda d: d.status.fault.message,
     ),
     AirseekersSensorEntityDescription(
-        key="rtk_status",
+        key="rtk",
         name="RTK status",
         entity_category=EntityCategory.DIAGNOSTIC,
         capability=CAP_RTK,
         value_fn=lambda d: d.status.rtk_status,
     ),
     AirseekersSensorEntityDescription(
-        key="gps_signal",
+        key="gps",
         name="GPS signal",
         native_unit_of_measurement=PERCENTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -103,7 +114,7 @@ SENSORS: tuple[AirseekersSensorEntityDescription, ...] = (
         value_fn=lambda d: d.status.gps_signal,
     ),
     AirseekersSensorEntityDescription(
-        key="wifi_rssi",
+        key="wifi",
         name="Wi-Fi RSSI",
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
@@ -175,6 +186,7 @@ class AirseekersSensor(AirseekersEntity, SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_{description.key}"
+        self.entity_id = build_entity_id("sensor", description.key)
 
     @property
     def native_value(self) -> StateType | datetime:

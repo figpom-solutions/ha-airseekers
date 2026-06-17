@@ -15,14 +15,22 @@ from homeassistant.const import Platform
 DOMAIN: Final = "airseekers"
 MANUFACTURER: Final = "AIRSEEKERS"
 
+# Stable object-id prefix for every entity this integration creates. Entity IDs are forced to
+# `<platform>.tron[_<suffix>]` (e.g. `lawn_mower.tron`, `sensor.tron_battery`) regardless of the
+# friendly device name, so the shipped Lovelace dashboard works out of the box. The IDs are then
+# kept stable across versions by the entity registry via each entity's stable unique_id.
+ENTITY_PREFIX: Final = "tron"
+
 # Platforms this integration sets up. Kept in build order; entities are still capability-gated.
 PLATFORMS: Final[list[Platform]] = [
     Platform.LAWN_MOWER,
+    Platform.DEVICE_TRACKER,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.NUMBER,
     Platform.SELECT,
+    Platform.SWITCH,
     Platform.CAMERA,
 ]
 
@@ -190,6 +198,26 @@ CAP_CAMERAS: Final = "cameras"
 CAP_LOCATE: Final = "locate"
 CAP_RESET_ERROR: Final = "reset_error"
 CAP_STOP: Final = "stop"
+CAP_SAFETY: Final = "safety"  # lifted / tilted / blade_blocked sensors
+CAP_POSITION: Final = "position"  # GPS lat/long for device_tracker
+CAP_AREA: Final = "area"  # mowed surface in m²
+
+# Mowing modes (advertised via CAP_MOWING_MODE). Only used when the backend supports it.
+MOWING_MODE_AUTO: Final = "auto"
+MOWING_MODE_SPOT: Final = "spot"
+MOWING_MODE_EDGE: Final = "edge"
+MOWING_MODE_PERIMETER: Final = "perimeter"
+MOWING_MODES: Final[list[str]] = [
+    MOWING_MODE_AUTO,
+    MOWING_MODE_SPOT,
+    MOWING_MODE_EDGE,
+    MOWING_MODE_PERIMETER,
+]
+DEFAULT_MOWING_MODE: Final = MOWING_MODE_AUTO
+
+# HA-side preference toggled by switch.tron_night_mowing (consumed by user automations).
+CONF_NIGHT_MOWING: Final = "night_mowing"
+DEFAULT_NIGHT_MOWING: Final = False
 
 # ---------------------------------------------------------------------------
 # Maintenance / warranty / blades

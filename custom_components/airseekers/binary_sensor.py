@@ -21,11 +21,12 @@ from .const import (
     CAP_CAMERAS,
     CAP_OBSTACLE,
     CAP_RAIN_SENSOR,
+    CAP_SAFETY,
     CONF_ENABLE_MAINTENANCE_SENSORS,
     DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersData, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 from .maintenance import build_maintenance_binary_sensors
 
 
@@ -58,8 +59,8 @@ BINARY_SENSORS: tuple[AirseekersBinarySensorEntityDescription, ...] = (
         value_fn=lambda d: d.status.docked,
     ),
     AirseekersBinarySensorEntityDescription(
-        key="raining",
-        name="Raining",
+        key="rain_detected",
+        name="Rain detected",
         device_class=BinarySensorDeviceClass.MOISTURE,
         capability=CAP_RAIN_SENSOR,
         value_fn=lambda d: d.status.raining,
@@ -76,6 +77,27 @@ BINARY_SENSORS: tuple[AirseekersBinarySensorEntityDescription, ...] = (
         device_class=BinarySensorDeviceClass.PROBLEM,
         capability=CAP_OBSTACLE,
         value_fn=lambda d: d.status.obstacle_detected,
+    ),
+    AirseekersBinarySensorEntityDescription(
+        key="lifted",
+        name="Lifted",
+        device_class=BinarySensorDeviceClass.SAFETY,
+        capability=CAP_SAFETY,
+        value_fn=lambda d: d.status.lifted,
+    ),
+    AirseekersBinarySensorEntityDescription(
+        key="tilted",
+        name="Tilted",
+        device_class=BinarySensorDeviceClass.SAFETY,
+        capability=CAP_SAFETY,
+        value_fn=lambda d: d.status.tilted,
+    ),
+    AirseekersBinarySensorEntityDescription(
+        key="blade_blocked",
+        name="Blade blocked",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        capability=CAP_SAFETY,
+        value_fn=lambda d: d.status.blade_blocked,
     ),
     AirseekersBinarySensorEntityDescription(
         key="camera_available",
@@ -121,6 +143,7 @@ class AirseekersBinarySensor(AirseekersEntity, BinarySensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_{description.key}"
+        self.entity_id = build_entity_id("binary_sensor", description.key)
 
     @property
     def is_on(self) -> bool | None:

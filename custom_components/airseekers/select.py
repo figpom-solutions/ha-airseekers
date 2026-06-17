@@ -21,14 +21,17 @@ from .const import (
     BACKENDS,
     CAMERA_DISCOVERY_MODES,
     CAP_CAMERAS,
+    CAP_MOWING_MODE,
     CAP_ZONES,
     CONF_BACKEND,
     CONF_CAMERA_DISCOVERY_MODE,
     DEFAULT_BACKEND,
     DEFAULT_CAMERA_DISCOVERY_MODE,
+    DEFAULT_MOWING_MODE,
+    MOWING_MODES,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 
 
 async def async_setup_entry(
@@ -42,6 +45,8 @@ async def async_setup_entry(
     entities: list[SelectEntity] = [AirseekersBackendSelect(coordinator, entry)]
     if device.supports(CAP_ZONES):
         entities.append(AirseekersZoneSelect(coordinator))
+    if device.supports(CAP_MOWING_MODE):
+        entities.append(AirseekersMowingModeSelect(coordinator))
     if device.supports(CAP_CAMERAS):
         entities.append(AirseekersCameraModeSelect(coordinator, entry))
     async_add_entities(entities)
@@ -55,6 +60,7 @@ class AirseekersZoneSelect(AirseekersEntity, SelectEntity):
     def __init__(self, coordinator: AirseekersDataUpdateCoordinator) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{self._device_id}_zone"
+        self.entity_id = build_entity_id("select", "zone")
 
     def _zone_by_name(self) -> dict[str, str]:
         return {z.name: z.zone_id for z in self.coordinator.data.zones}
@@ -100,6 +106,7 @@ class AirseekersBackendSelect(AirseekersEntity, SelectEntity):
         super().__init__(coordinator)
         self._entry = entry
         self._attr_unique_id = f"{self._device_id}_backend_mode"
+        self.entity_id = build_entity_id("select", "backend")
 
     @property
     def current_option(self) -> str | None:
@@ -130,6 +137,7 @@ class AirseekersCameraModeSelect(AirseekersEntity, SelectEntity):
         super().__init__(coordinator)
         self._entry = entry
         self._attr_unique_id = f"{self._device_id}_camera_mode"
+        self.entity_id = build_entity_id("select", "camera_mode")
 
     @property
     def current_option(self) -> str | None:
@@ -140,3 +148,28 @@ class AirseekersCameraModeSelect(AirseekersEntity, SelectEntity):
             return
         new_options = {**self._entry.options, CONF_CAMERA_DISCOVERY_MODE: option}
         self.hass.config_entries.async_update_entry(self._entry, options=new_options)
+
+
+class AirseekersMowingModeSelect(AirseekersEntity, SelectEntity):
+    """Select the mowing mode (when the backend supports it)."""
+
+    _attr_name = "Mowing mode"
+    _attr_options = list(MOWING_MODES)
+
+    def __init__(self, coordinator: AirseekersDataUpdateCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{self._device_id}_mowing_mode"
+        self.entity_id = build_entity_id("select", "mowing_mode")
+
+    @property
+    def current_option(self) -> str | None:
+        return self._status.mowing_mode or DEFAULT_MOWING_MODE
+
+    async def async_select_option(self, option: str) -> None:
+        try:
+            await self.coordinator.client.async_set_mowing_mode(self._device_id, option)
+        except AirseekersUnsupportedFeature as err:
+            raise HomeAssistantError(f"AIRSEEKERS: not supported by this backend: {err}") from err
+        except AirseekersError as err:
+            raise HomeAssistantError(f"AIRSEEKERS could not set mowing mode: {err}") from err
+        await self.coordinator.async_request_refresh()

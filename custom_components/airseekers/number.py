@@ -22,7 +22,7 @@ from .const import (
     DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 from .maintenance import build_maintenance_numbers
 
 
@@ -60,6 +60,7 @@ class AirseekersCuttingHeightNumber(AirseekersEntity, NumberEntity):
     ) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{self._device_id}_cutting_height"
+        self.entity_id = build_entity_id("number", "cutting_height")
         device = coordinator.data.device
         # Options override device-reported bounds when present.
         self._attr_native_min_value = float(

@@ -27,7 +27,7 @@ from .const import (
     DEFAULT_ENABLE_MAINTENANCE_SENSORS,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 from .maintenance import build_maintenance_buttons
 
 
@@ -59,8 +59,8 @@ BUTTONS: tuple[AirseekersButtonEntityDescription, ...] = (
         press_fn=lambda c: c.client.async_pause(c.device_id),
     ),
     AirseekersButtonEntityDescription(
-        key="dock",
-        name="Dock",
+        key="return_to_dock",
+        name="Return to dock",
         press_fn=lambda c: c.client.async_dock(c.device_id),
     ),
     AirseekersButtonEntityDescription(
@@ -70,8 +70,8 @@ BUTTONS: tuple[AirseekersButtonEntityDescription, ...] = (
         press_fn=lambda c: c.client.async_stop(c.device_id),
     ),
     AirseekersButtonEntityDescription(
-        key="locate",
-        name="Locate",
+        key="find",
+        name="Find",
         device_class=ButtonDeviceClass.IDENTIFY,
         capability=CAP_LOCATE,
         press_fn=lambda c: c.client.async_locate(c.device_id),
@@ -120,6 +120,7 @@ class AirseekersButton(AirseekersEntity, ButtonEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_button_{description.key}"
+        self.entity_id = build_entity_id("button", description.key)
 
     async def async_press(self) -> None:
         try:

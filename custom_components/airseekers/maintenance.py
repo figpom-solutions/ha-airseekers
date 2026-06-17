@@ -59,7 +59,7 @@ from .const import (
     WARRANTY_EXPIRED,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -470,6 +470,7 @@ class MaintenanceSensor(_MaintenanceEntity, SensorEntity):
         super().__init__(coordinator, manager)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_{description.key}"
+        self.entity_id = build_entity_id("sensor", description.key)
 
     @property
     def native_value(self) -> Any:
@@ -515,6 +516,7 @@ class MaintenanceBinarySensor(_MaintenanceEntity, BinarySensorEntity):
         super().__init__(coordinator, manager)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_{description.key}"
+        self.entity_id = build_entity_id("binary_sensor", description.key)
 
     @property
     def is_on(self) -> bool:
@@ -558,6 +560,7 @@ class MaintenanceButton(_MaintenanceEntity, ButtonEntity):
         super().__init__(coordinator, manager)
         self.entity_description = description
         self._attr_unique_id = f"{self._device_id}_button_{description.key}"
+        self.entity_id = build_entity_id("button", description.key)
 
     async def async_press(self) -> None:
         await self.entity_description.press_fn(self.manager)
@@ -618,6 +621,7 @@ class MaintenanceNumber(_MaintenanceEntity, NumberEntity):
         self._desc = description
         self._attr_name = description.name
         self._attr_unique_id = f"{self._device_id}_{description.key}"
+        self.entity_id = build_entity_id("number", description.key)
         self._attr_native_min_value = description.native_min_value
         self._attr_native_max_value = description.native_max_value
         self._attr_native_step = description.native_step

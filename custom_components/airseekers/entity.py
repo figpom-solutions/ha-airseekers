@@ -6,8 +6,19 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import AirseekersStatus
-from .const import DOMAIN, MANUFACTURER
+from .const import DOMAIN, ENTITY_PREFIX, MANUFACTURER
 from .coordinator import AirseekersData, AirseekersDataUpdateCoordinator
+
+
+def build_entity_id(platform: str, suffix: str | None = None) -> str:
+    """Return a deterministic, stable entity_id like ``sensor.tron_battery`` / ``lawn_mower.tron``.
+
+    Forcing the object_id (rather than deriving it from the friendly device name) lets the shipped
+    Lovelace dashboard reference fixed IDs. The entity registry then keeps it stable across versions
+    via each entity's unique_id.
+    """
+    object_id = ENTITY_PREFIX if not suffix else f"{ENTITY_PREFIX}_{suffix}"
+    return f"{platform}.{object_id}"
 
 
 class AirseekersEntity(CoordinatorEntity[AirseekersDataUpdateCoordinator]):

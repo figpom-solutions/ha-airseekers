@@ -37,9 +37,11 @@ from .const import (
     DEFAULT_ENABLE_CAMERA_ENTITIES,
     DEFAULT_PREFER_COMPOSITE_CAMERA,
     DEFAULT_PRIVACY_MODE,
+    ROLE_COMPOSITE_300,
+    ROLE_COMPOSITE_360,
 )
 from .coordinator import AirseekersConfigEntry, AirseekersDataUpdateCoordinator
-from .entity import AirseekersEntity
+from .entity import AirseekersEntity, build_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -124,6 +126,9 @@ class AirseekersCamera(AirseekersEntity, Camera):
 
         self._attr_name = cam.name
         self._attr_unique_id = f"{self._device_id}_{cam.camera_id}"
+        # Stable entity_id by role: camera.tron_front/_rear/_left/_right, composite -> _panoramic.
+        suffix = "panoramic" if cam.role in (ROLE_COMPOSITE_300, ROLE_COMPOSITE_360) else cam.role
+        self.entity_id = build_entity_id("camera", suffix)
         self._attr_entity_registry_enabled_default = enabled_default
         if cam.supports_live:
             self._attr_supported_features = CameraEntityFeature.STREAM

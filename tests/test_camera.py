@@ -12,13 +12,13 @@ from custom_components.airseekers.const import CONF_ENABLE_ALL_CAMERAS, CONF_PRI
 from .conftest import _stub_options, async_setup_stub
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
-FRONT = "camera.airseekers_tron_max_front"
-COMPOSITE = "camera.airseekers_tron_max_360_view"
+FRONT = "camera.tron_front"
+COMPOSITE = "camera.tron_panoramic"
 
 
 async def test_all_cameras_created(hass) -> None:
     await async_setup_stub(hass, options=_stub_options(**{CONF_ENABLE_ALL_CAMERAS: True}))
-    cams = [e for e in hass.states.async_entity_ids("camera") if "airseekers" in e]
+    cams = [e for e in hass.states.async_entity_ids("camera") if e.startswith("camera.tron_")]
     assert len(cams) == 5
     assert FRONT in cams
     assert COMPOSITE in cams

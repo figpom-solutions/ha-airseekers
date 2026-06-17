@@ -13,10 +13,11 @@ async def test_setup_creates_entities_and_services(hass) -> None:
     entry = await async_setup_stub(hass)
     assert entry.state is ConfigEntryState.LOADED
 
-    # Primary mower entity + a couple of sensors exist.
-    assert hass.states.get("lawn_mower.airseekers_tron_max") is not None
-    assert hass.states.get("sensor.airseekers_tron_max_battery") is not None
-    assert hass.states.get("binary_sensor.airseekers_tron_max_online") is not None
+    # Primary mower entity + a couple of sensors exist (stable tron_* IDs).
+    assert hass.states.get("lawn_mower.tron") is not None
+    assert hass.states.get("device_tracker.tron") is not None
+    assert hass.states.get("sensor.tron_battery") is not None
+    assert hass.states.get("binary_sensor.tron_online") is not None
 
     # Domain services were registered.
     assert hass.services.has_service(DOMAIN, "refresh")

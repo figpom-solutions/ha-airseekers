@@ -8,7 +8,7 @@ from custom_components.airseekers.const import DOMAIN
 
 from .conftest import async_setup_stub
 
-MOWER = "lawn_mower.airseekers_tron_max"
+MOWER = "lawn_mower.tron"
 
 
 async def test_warranty_expired(hass) -> None:
@@ -20,8 +20,8 @@ async def test_warranty_expired(hass) -> None:
         blocking=True,
     )
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.airseekers_tron_max_warranty_status").state == "expired"
-    assert hass.states.get("binary_sensor.airseekers_tron_max_warranty_expired").state == "on"
+    assert hass.states.get("sensor.tron_warranty_status").state == "expired"
+    assert hass.states.get("binary_sensor.tron_warranty_expired").state == "on"
 
 
 async def test_mark_blades_changed_resets_and_logs(hass) -> None:
@@ -39,7 +39,7 @@ async def test_mark_blades_changed_resets_and_logs(hass) -> None:
     assert manager.log[0]["type"] == "blade_change"
     assert manager.log[0]["comment"] == "test change"
     # Runtime reset to ~0 right after a change.
-    assert float(hass.states.get("sensor.airseekers_tron_max_blade_runtime").state) == 0.0
+    assert float(hass.states.get("sensor.tron_blade_runtime").state) == 0.0
 
 
 async def test_add_maintenance_event_fires_bus_event(hass) -> None:

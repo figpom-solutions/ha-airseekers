@@ -1,0 +1,157 @@
+# AIRSEEKERS TRON — complete Lovelace dashboard.
+#
+# Uses the integration's stable entity IDs (prefix `tron`). Add as a YAML-mode dashboard:
+#   Settings -> Dashboards -> + Add dashboard -> (new) -> edit in YAML, paste this file's `views:`.
+# Or in configuration.yaml:
+#   lovelace:
+#     dashboards:
+#       airseekers-tron:
+#         mode: yaml
+#         title: AIRSEEKERS TRON
+#         filename: lovelace/airseekers_tron_dashboard.yaml
+title: AIRSEEKERS TRON
+views:
+  - title: Mower
+    path: mower
+    cards:
+      - type: entities
+        title: Status
+        entities:
+          - entity: lawn_mower.tron
+          - entity: sensor.tron_status
+          - entity: sensor.tron_battery
+          - entity: sensor.tron_zone
+          - entity: sensor.tron_area
+          - entity: binary_sensor.tron_online
+          - entity: binary_sensor.tron_charging
+          - entity: binary_sensor.tron_docked
+          - entity: binary_sensor.tron_error
+          - entity: sensor.tron_error_code
+
+      - type: gauge
+        name: Battery
+        entity: sensor.tron_battery
+        min: 0
+        max: 100
+        severity: { green: 40, yellow: 20, red: 0 }
+
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Start
+            icon: mdi:play
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target: { entity_id: button.tron_start }
+          - type: button
+            name: Pause
+            icon: mdi:pause
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target: { entity_id: button.tron_pause }
+          - type: button
+            name: Dock
+            icon: mdi:home-import-outline
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target: { entity_id: button.tron_return_to_dock }
+          - type: button
+            name: Find
+            icon: mdi:map-marker
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target: { entity_id: button.tron_find }
+
+      - type: entities
+        title: Settings
+        entities:
+          - entity: select.tron_zone
+          - entity: select.tron_mowing_mode
+          - entity: number.tron_cutting_height
+          - entity: switch.tron_night_mowing
+          - entity: switch.tron_camera_privacy
+
+      - type: entities
+        title: Safety & signal
+        entities:
+          - entity: binary_sensor.tron_lifted
+          - entity: binary_sensor.tron_tilted
+          - entity: binary_sensor.tron_blade_blocked
+          - entity: binary_sensor.tron_obstacle_detected
+          - entity: binary_sensor.tron_rain_detected
+          - entity: sensor.tron_rtk
+          - entity: sensor.tron_gps
+          - entity: sensor.tron_wifi
+          - entity: sensor.tron_firmware
+
+      - type: map
+        title: Position
+        entities:
+          - entity: device_tracker.tron
+
+  - title: Cameras
+    path: cameras
+    cards:
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: picture-entity
+            entity: camera.tron_panoramic
+            camera_view: auto
+          - type: picture-entity
+            entity: camera.tron_front
+            camera_view: auto
+          - type: picture-entity
+            entity: camera.tron_left
+            camera_view: auto
+          - type: picture-entity
+            entity: camera.tron_right
+            camera_view: auto
+          - type: picture-entity
+            entity: camera.tron_rear
+            camera_view: auto
+      - type: entities
+        entities:
+          - entity: switch.tron_camera_privacy
+          - entity: select.tron_camera_mode
+
+  - title: Maintenance
+    path: maintenance
+    cards:
+      - type: gauge
+        name: Blade life remaining
+        entity: sensor.tron_blade_life_remaining
+        min: 0
+        max: 100
+        severity: { green: 40, yellow: 20, red: 0 }
+
+      - type: entities
+        title: Warranty
+        entities:
+          - entity: sensor.tron_warranty_status
+          - entity: sensor.tron_warranty_days_remaining
+          - entity: sensor.tron_warranty_end_date
+
+      - type: entities
+        title: Blades
+        entities:
+          - entity: sensor.tron_blade_status
+          - entity: sensor.tron_blade_runtime
+          - entity: sensor.tron_last_blade_change
+          - entity: sensor.tron_next_blade_change_estimate
+          - entity: button.tron_mark_blades_changed
+          - entity: button.tron_reset_blade_timer
+
+      - type: entities
+        title: Counters & status
+        entities:
+          - entity: sensor.tron_total_mowing_time
+          - entity: sensor.tron_total_mowing_cycles
+          - entity: sensor.tron_maintenance_status
+          - entity: button.tron_export_maintenance_log
+          - entity: button.tron_reset_maintenance_alert
