@@ -380,6 +380,11 @@ class AirseekersBackend(ABC):
     async def async_reset_error(self, device_id: str) -> None:
         raise AirseekersUnsupportedFeature(f"{self.name}: reset error not supported")
 
+    async def async_send_command_raw(
+        self, device_id: str, command: str, params: dict | None = None
+    ) -> object:
+        raise AirseekersUnsupportedFeature(f"{self.name}: raw command not supported")
+
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         return []
 
@@ -587,6 +592,14 @@ class StubBackend(AirseekersBackend):
         if self._state == STATE_ERROR:
             self._state = STATE_IDLE
 
+    async def async_send_command_raw(
+        self, device_id: str, command: str, params: dict | None = None
+    ) -> object:
+        self._check_device(device_id)
+        # Never log the payload; only acknowledge the command name length for debugging.
+        _LOGGER.debug("stub backend: raw command %r received (%d params)", command, len(params or {}))
+        return {"ok": True, "command": command, "backend": self.name}
+
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         self._check_device(device_id)
         return [replace(z) for z in self._zones]
@@ -759,6 +772,11 @@ class AirseekersClient:
 
     async def async_reset_error(self, device_id: str) -> None:
         await self._impl.async_reset_error(device_id)
+
+    async def async_send_command_raw(
+        self, device_id: str, command: str, params: dict | None = None
+    ) -> object:
+        return await self._impl.async_send_command_raw(device_id, command, params)
 
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
         return await self._impl.async_get_zones(device_id)

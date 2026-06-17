@@ -31,6 +31,7 @@ from .coordinator import (
     AirseekersRuntimeData,
 )
 from .maintenance import MaintenanceManager
+from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,6 +89,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AirseekersConfigEntry) -
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_on_update))
+    async_setup_services(hass)
     await maintenance.async_evaluate_alerts()
     return True
 
@@ -97,6 +99,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: AirseekersConfigEntry) 
     unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unloaded and (runtime := getattr(entry, "runtime_data", None)) is not None:
         await runtime.client.async_close()
+        # Remove domain services once the last entry is gone.
+        remaining = [e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id]
+        if not remaining:
+            async_unload_services(hass)
     return unloaded
 
 

@@ -81,8 +81,17 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] wired into __init__ (manager) + 4 platforms; alerts re-evaluated each coordinator tick
 - [ ] maintenance tests (warranty math edge cases, restore, no-spam) — Phase 8 (HA harness)
 
-## Backlog (next phases)
-- Phase 7: services.yaml + handlers (control + maintenance + guarded raw debug), entity/device targeting, Lovelace dashboard + example automations (docs/dashboard.md, docs/maintenance.md, docs/security.md).
-- Phase 8: full pytest suite, ruff/mypy, README/doc polish, entity-name translations, final quality gate.
+## Phase 7 — Services & Lovelace dashboard ✅ (committed)
+- [x] `services.py` + `services.yaml`: refresh, start_zone, set_cutting_height, send_command_raw
+  (guarded by enable_raw_command), set_purchase_date, set_warranty_duration, mark_blades_changed,
+  add_maintenance_event, reset_maintenance_counters, export_maintenance_log (SupportsResponse)
+- [x] device/entity target resolution → config entry; register once; remove on last unload
+- [x] `client.async_send_command_raw` (+ stub no-op, never logs payload)
+- [x] `docs/dashboard.md` (Lovelace dashboard + 7 example automations), `docs/maintenance.md`, `docs/security.md`
+
+## Backlog (next phase)
+- Phase 8: full pytest suite (flows/coordinator/lawn_mower/platforms/cameras/diagnostics/maintenance/
+  restore/no-spam), ruff/mypy clean, README/doc polish, entity-name translations, final quality gate.
+  Then a live HA stub-mode smoke test → tag v0.1.0.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

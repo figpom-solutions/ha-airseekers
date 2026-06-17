@@ -1,0 +1,164 @@
+refresh:
+  name: Refresh
+  description: Force an immediate data refresh from the robot.
+  target:
+    device:
+      integration: airseekers
+
+start_zone:
+  name: Start zone
+  description: Start mowing a specific zone.
+  target:
+    device:
+      integration: airseekers
+  fields:
+    zone_id:
+      name: Zone ID
+      description: The zone identifier to mow (see the Zone select for available zones).
+      required: true
+      example: zone-back
+      selector:
+        text:
+
+set_cutting_height:
+  name: Set cutting height
+  description: Set the cutting height in millimetres.
+  target:
+    device:
+      integration: airseekers
+  fields:
+    height_mm:
+      name: Height (mm)
+      description: Cutting height in millimetres.
+      required: true
+      example: 45
+      selector:
+        number:
+          min: 0
+          max: 500
+          step: 1
+          unit_of_measurement: mm
+          mode: box
+
+send_command_raw:
+  name: Send raw command (debug)
+  description: >-
+    Advanced/debug only. Sends a raw command to the backend. Disabled unless 'Enable raw debug
+    command service' is turned on in the integration options. Use with care.
+  target:
+    device:
+      integration: airseekers
+  fields:
+    command:
+      name: Command
+      description: Backend-specific command name.
+      required: true
+      selector:
+        text:
+    params:
+      name: Parameters
+      description: Optional command parameters (object).
+      required: false
+      selector:
+        object:
+
+set_purchase_date:
+  name: Set purchase date
+  description: Set the robot purchase date (used for warranty tracking).
+  target:
+    device:
+      integration: airseekers
+  fields:
+    purchase_date:
+      name: Purchase date
+      description: Date the robot was purchased.
+      required: true
+      selector:
+        date:
+
+set_warranty_duration:
+  name: Set warranty duration
+  description: Set the warranty duration in months.
+  target:
+    device:
+      integration: airseekers
+  fields:
+    months:
+      name: Months
+      description: Warranty duration in months.
+      required: true
+      example: 24
+      selector:
+        number:
+          min: 0
+          max: 240
+          step: 1
+          mode: box
+
+mark_blades_changed:
+  name: Mark blades changed
+  description: Record a blade change now (resets blade wear counters and logs the event).
+  target:
+    device:
+      integration: airseekers
+  fields:
+    comment:
+      name: Comment
+      description: Optional note for the maintenance log.
+      required: false
+      selector:
+        text:
+
+add_maintenance_event:
+  name: Add maintenance event
+  description: Add an entry to the maintenance log.
+  target:
+    device:
+      integration: airseekers
+  fields:
+    event_type:
+      name: Event type
+      description: The type of maintenance event.
+      required: true
+      selector:
+        select:
+          options:
+            - blade_change
+            - cleaning
+            - firmware_update
+            - repair
+            - warranty_claim
+            - battery_check
+            - user_note
+    comment:
+      name: Comment
+      description: Optional note for the maintenance log.
+      required: false
+      selector:
+        text:
+
+reset_maintenance_counters:
+  name: Reset maintenance counters
+  description: >-
+    Reset blade wear counters and re-arm maintenance alerts. The maintenance log history is kept.
+  target:
+    device:
+      integration: airseekers
+
+export_maintenance_log:
+  name: Export maintenance log
+  description: Export the maintenance log (also posted as a persistent notification).
+  target:
+    device:
+      integration: airseekers
+  fields:
+    format:
+      name: Format
+      description: Export format.
+      required: false
+      default: markdown
+      selector:
+        select:
+          options:
+            - markdown
+            - json
