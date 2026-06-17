@@ -5,11 +5,11 @@
 See: `.planning/PROJECT.md` (updated 2026-06-17)
 
 **Core value:** Install via HACS → add the robot → fully working HA device on the stub backend, before the real protocol is mapped.
-**Current focus:** Phase 5 — Dynamic multi-camera support
+**Current focus:** Phase 6 — Maintenance, warranty & blade wear (persistent)
 
 ## Status
 
-- **Phase:** Phases 1–4 done; Phase 5 next (of 8)
+- **Phase:** Phases 1–5 done; Phase 6 next (of 8)
 - **Mode:** YOLO + quality agents (research / plan-check / verifier on); model profile: quality
 - **GSD management:** manual (parent dir is an active GSD project; `gsd-sdk` anchors to the outer worktree)
 - **Backend in use:** `stub` (real backends UNVERIFIED)
@@ -23,6 +23,7 @@ See: `.planning/PROJECT.md` (updated 2026-06-17)
 - 2026-06-17 — Phase 2 committed: api.py (models, exceptions, AirseekersClient, fully functional stub backend + skeleton backends) and tests/test_api.py. Stub + warranty/blade math verified locally via HA shim.
 - 2026-06-17 — Phase 3 committed: redact.py, coordinator.py (adaptive polling, config_entry=, reauth), entity.py, real __init__.py (setup/unload + options reload), config_flow.py (config+options+reauth), lawn_mower.py, diagnostics.py, platform stubs (sensor/binary_sensor/button/number/select/camera), strings.json + translations (en/fr). Redaction verified locally; HA-runtime modules compile and follow verified current HA APIs (full pytest pending in HA env).
 - 2026-06-18 — Phase 4 committed: real sensor/binary_sensor/button/number/select platforms (capability-gated, description-driven). Added client async_locate/async_reset_error (+ stub). mowing_mode select deferred (no verified backend support); CAP_MOWING_MODE no longer advertised by stub. Stub logic re-verified via shim.
+- 2026-06-18 — Phase 5 committed: real camera.py — dynamic one-entity-per-reported-camera, role-named, stable unique_id, snapshot/live/composite, attributes without URLs, privacy mode + disable-when-docked/at-night + enabled-roles/prefer-composite filtering. Compiles; entity behaviour to be exercised in HA/CI (camera tests in Phase 8).
 
 ## Open Questions / Unknowns
 

@@ -63,8 +63,17 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] client `async_locate` / `async_reset_error` (+ stub) for the locate/reset buttons
 - [ ] entity-name translations (en/fr) — deferred to Phase 8 polish (names are English strings for now)
 
+## Phase 5 — Dynamic multi-camera support ✅ (committed)
+- [x] `camera.py`: one entity per reported camera (dynamic), role-named, `unique_id={device_id}_{camera_id}`
+- [x] snapshot (`async_camera_image`) + live (`stream_source` + STREAM feature) + composite flag
+- [x] attributes (camera_id/role/stream_type/supports_*/is_composite/source/last_frame_at/privacy_mode), NO URLs
+- [x] options: enable entities, enabled roles, prefer composite (enabled-default), privacy mode,
+  disable when docked / at night, discovery mode = disabled short-circuit
+- [ ] camera entity tests (snapshot-only/live/composite/privacy) — Phase 8 (needs HA harness)
+- [ ] runtime addition of NEW cameras appearing after setup — future enhancement (stub set is static)
+
 ## Backlog (next phases)
-- Phase 5: dynamic multi-camera entities (snapshot/live/composite, privacy options).
 - Phase 6: maintenance subsystem (Store + RestoreEntity), warranty/blade sensors+binaries+buttons+numbers, log, no-spam alerts.
+- Phase 7: services.yaml + handlers (control + maintenance + guarded raw debug) + Lovelace dashboard + automations.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*
