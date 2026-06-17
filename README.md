@@ -99,11 +99,14 @@ Anonymise before sharing.
 
 ```bash
 pip install -r requirements_test.txt
-ruff check .
+ruff check . && ruff format --check .
 pytest
 ```
 
 Python 3.12+, full async, typed. See [`docs/architecture.md`](docs/architecture.md).
+
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs ruff, the pytest suite
+(`pytest-homeassistant-custom-component`), `hassfest`, and HACS validation on every push/PR.
 
 ## Roadmap
 

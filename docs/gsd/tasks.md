@@ -89,9 +89,16 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] `client.async_send_command_raw` (+ stub no-op, never logs payload)
 - [x] `docs/dashboard.md` (Lovelace dashboard + 7 example automations), `docs/maintenance.md`, `docs/security.md`
 
-## Backlog (next phase)
-- Phase 8: full pytest suite (flows/coordinator/lawn_mower/platforms/cameras/diagnostics/maintenance/
-  restore/no-spam), ruff/mypy clean, README/doc polish, entity-name translations, final quality gate.
-  Then a live HA stub-mode smoke test → tag v0.1.0.
+## Phase 8 — Tests, quality & documentation ✅ (committed) — MILESTONE COMPLETE
+- [x] pytest suite: test_api, test_redact (verified locally) + test_config_flow, test_init,
+  test_entities, test_camera, test_diagnostics, test_maintenance (run in HA/CI)
+- [x] conftest fixtures (enable_custom_integrations, stub setup helper)
+- [x] GitHub Actions CI: ruff + ruff format + pytest + hassfest + HACS validation
+- [x] README dev/CI note
+- [ ] entity-name translations (fr/en) — deferred polish (English names work today)
+- [ ] live HA stub-mode smoke → tag v0.1.0 (after CI is green)
+
+## Done
+All 8 roadmap phases delivered. See `.planning/STATE.md` → "Next (post-milestone)".
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*
