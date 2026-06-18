@@ -16,7 +16,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 import logging
 import struct
 import time
@@ -31,20 +31,20 @@ from .const import (
     BLADE_OK,
     BLADE_REPLACE,
     BLADE_SOON,
+    CAP_AREA,
     CAP_BATTERY,
     CAP_BLADE_MOTOR,
     CAP_CAMERAS,
     CAP_CUTTING_HEIGHT,
-    CAP_AREA,
     CAP_GPS,
     CAP_LOCATE,
     CAP_MOWING_MODE,
     CAP_OBSTACLE,
     CAP_POSITION,
-    CAP_SAFETY,
     CAP_RAIN_SENSOR,
     CAP_RESET_ERROR,
     CAP_RTK,
+    CAP_SAFETY,
     CAP_STOP,
     CAP_WIFI_RSSI,
     CAP_ZONES,
@@ -55,9 +55,9 @@ from .const import (
     DEFAULT_MOWING_MODE,
     DEFAULT_WARRANTY_MONTHS,
     DEFAULT_WARRANTY_WARNING_DAYS,
-    MOWING_MODES,
     MAINTENANCE_OK,
     MODEL_TRON_MAX,
+    MOWING_MODES,
     ROLE_COMPOSITE_360,
     ROLE_FRONT,
     ROLE_LEFT,
@@ -310,10 +310,7 @@ class AirseekersStatus:
 
 
 def _days_in_month(year: int, month: int) -> int:
-    if month == 12:
-        nxt = date(year + 1, 1, 1)
-    else:
-        nxt = date(year, month + 1, 1)
+    nxt = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
     return (nxt - date(year, month, 1)).days
 
 
@@ -331,7 +328,9 @@ def _solid_png(width: int, height: int, rgb: tuple[int, int, int]) -> bytes:
 
     def _chunk(typ: bytes, data: bytes) -> bytes:
         body = typ + data
-        return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
+        return (
+            struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xFFFFFFFF)
+        )
 
     signature = b"\x89PNG\r\n\x1a\n"
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)  # 8-bit, truecolor RGB
@@ -356,7 +355,13 @@ class AirseekersBackend(ABC):
 
     name: str = "abstract"
 
-    async def async_login(self, username: str, password: str) -> None:  # noqa: ARG002
+    # Whether this backend performs HTTP I/O and therefore needs an aiohttp ``ClientSession``.
+    # Kept False for the stub and the not-yet-implemented skeletons so callers (e.g. the config
+    # flow) don't allocate a real session — and its DNS resolver thread — for a backend that never
+    # uses it. Flip to True on a backend once it makes real network calls.
+    requires_session: bool = False
+
+    async def async_login(self, username: str, password: str) -> None:
         raise AirseekersUnsupportedFeature(f"{self.name}: login not supported")
 
     async def async_refresh_token(self) -> None:
@@ -547,7 +552,7 @@ class StubBackend(AirseekersBackend):
     async def async_get_status(self, device_id: str) -> AirseekersStatus:
         self._check_device(device_id)
         self._advance()
-        battery = int(round(self._battery))
+        battery = round(self._battery)
         docked = self._state in (STATE_DOCKED, STATE_CHARGING)
         return AirseekersStatus(
             device_id=device_id,
@@ -576,7 +581,7 @@ class StubBackend(AirseekersBackend):
             total_mowing_time_hours=round(self._total_mowing_hours, 2),
             total_cycles=self._total_cycles,
             fault=replace(self._fault),
-            last_update=datetime.now(timezone.utc),
+            last_update=datetime.now(UTC),
         )
 
     async def async_start_mowing(self, device_id: str, zone_id: str | None = None) -> None:
@@ -641,7 +646,9 @@ class StubBackend(AirseekersBackend):
     ) -> object:
         self._check_device(device_id)
         # Never log the payload; only acknowledge the command name length for debugging.
-        _LOGGER.debug("stub backend: raw command %r received (%d params)", command, len(params or {}))
+        _LOGGER.debug(
+            "stub backend: raw command %r received (%d params)", command, len(params or {})
+        )
         return {"ok": True, "command": command, "backend": self.name}
 
     async def async_get_zones(self, device_id: str) -> list[AirseekersZone]:
@@ -684,7 +691,9 @@ class _UnimplementedBackend(AirseekersBackend):
 
     _doc = "docs/api_mapping.md"
 
-    def __init__(self, *, session: object | None = None, config: Mapping[str, object] | None = None):
+    def __init__(
+        self, *, session: object | None = None, config: Mapping[str, object] | None = None
+    ):
         self._session = session
         self._config = dict(config or {})
 
@@ -752,6 +761,14 @@ def _build_backend(
     if cls is None:
         raise AirseekersApiError(f"unknown backend: {backend!r}")
     return cls(session=session, config=config)  # type: ignore[call-arg]
+
+
+def backend_requires_session(backend: str) -> bool:
+    """Return whether a backend performs HTTP I/O and needs an aiohttp ``ClientSession``."""
+    if backend == BACKEND_STUB:
+        return StubBackend.requires_session
+    cls = _BACKENDS.get(backend)
+    return bool(cls.requires_session) if cls is not None else False
 
 
 # ---------------------------------------------------------------------------

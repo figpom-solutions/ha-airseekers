@@ -11,7 +11,7 @@ mode and the docked/night switches suppress imagery without deleting the entity.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import logging
 
 from homeassistant.components.camera import Camera, CameraEntityFeature
@@ -73,7 +73,10 @@ async def async_setup_entry(
     opts = entry.options
     if not opts.get(CONF_ENABLE_CAMERA_ENTITIES, DEFAULT_ENABLE_CAMERA_ENTITIES):
         return
-    if opts.get(CONF_CAMERA_DISCOVERY_MODE, DEFAULT_CAMERA_DISCOVERY_MODE) == CAMERA_DISCOVERY_DISABLED:
+    if (
+        opts.get(CONF_CAMERA_DISCOVERY_MODE, DEFAULT_CAMERA_DISCOVERY_MODE)
+        == CAMERA_DISCOVERY_DISABLED
+    ):
         return
 
     coordinator = entry.runtime_data.coordinator
@@ -143,7 +146,9 @@ class AirseekersCamera(AirseekersEntity, Camera):
 
     @property
     def _privacy_mode(self) -> bool:
-        return bool(self.coordinator.config_entry.options.get(CONF_PRIVACY_MODE, DEFAULT_PRIVACY_MODE))
+        return bool(
+            self.coordinator.config_entry.options.get(CONF_PRIVACY_MODE, DEFAULT_PRIVACY_MODE)
+        )
 
     def _is_night(self) -> bool:
         sun = self.hass.states.get("sun.sun")
@@ -159,11 +164,7 @@ class AirseekersCamera(AirseekersEntity, Camera):
 
     @property
     def available(self) -> bool:
-        return (
-            super().available
-            and self._cam_info is not None
-            and not self._suppressed_unavailable
-        )
+        return super().available and self._cam_info is not None and not self._suppressed_unavailable
 
     @property
     def extra_state_attributes(self) -> dict[str, object]:
@@ -194,7 +195,7 @@ class AirseekersCamera(AirseekersEntity, Camera):
         except AirseekersError as err:
             _LOGGER.debug("Camera %s snapshot failed: %s", self._camera_id, err)
             return None
-        self._last_frame_at = datetime.now(timezone.utc)
+        self._last_frame_at = datetime.now(UTC)
         return image
 
     async def stream_source(self) -> str | None:

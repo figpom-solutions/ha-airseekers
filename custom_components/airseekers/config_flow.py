@@ -6,8 +6,6 @@ from collections.abc import Mapping
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigFlow,
     ConfigFlowResult,
@@ -16,6 +14,7 @@ from homeassistant.config_entries import (
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import voluptuous as vol
 
 from .api import (
     AirseekersApiError,
@@ -24,6 +23,7 @@ from .api import (
     AirseekersConnectionError,
     AirseekersError,
     AirseekersUnsupportedFeature,
+    backend_requires_session,
 )
 from .const import (
     BACKENDS,
@@ -85,7 +85,9 @@ async def _async_validate(
     model: str | None,
 ) -> str:
     """Validate a connection and return the device_id. Raises mapped AirseekersError subclasses."""
-    session = None if backend == DEFAULT_BACKEND else async_get_clientsession(hass)
+    # Only allocate a real aiohttp session (and its DNS resolver thread) when the backend actually
+    # performs HTTP I/O. The stub and the not-yet-implemented skeletons never use it.
+    session = async_get_clientsession(hass) if backend_requires_session(backend) else None
     client = AirseekersClient(
         backend,
         session=session,
@@ -151,9 +153,7 @@ USER_SCHEMA = vol.Schema(
         vol.Optional(CONF_USERNAME): str,
         vol.Optional(CONF_PASSWORD): str,
         vol.Optional(CONF_PREFER_LOCAL, default=False): bool,
-        vol.Optional(
-            CONF_ENABLE_CAMERA_ENTITIES, default=DEFAULT_ENABLE_CAMERA_ENTITIES
-        ): bool,
+        vol.Optional(CONF_ENABLE_CAMERA_ENTITIES, default=DEFAULT_ENABLE_CAMERA_ENTITIES): bool,
         vol.Optional(
             CONF_ENABLE_MAINTENANCE_SENSORS, default=DEFAULT_ENABLE_MAINTENANCE_SENSORS
         ): bool,
@@ -166,9 +166,7 @@ class AirseekersConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
@@ -191,13 +189,9 @@ class AirseekersConfigFlow(ConfigFlow, domain=DOMAIN):
                     data=user_input,
                     options=_default_options(user_input),
                 )
-        return self.async_show_form(
-            step_id="user", data_schema=USER_SCHEMA, errors=errors
-        )
+        return self.async_show_form(step_id="user", data_schema=USER_SCHEMA, errors=errors)
 
-    async def async_step_reauth(
-        self, entry_data: Mapping[str, Any]
-    ) -> ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
@@ -250,9 +244,7 @@ class AirseekersConfigFlow(ConfigFlow, domain=DOMAIN):
 class AirseekersOptionsFlow(OptionsFlow):
     """Handle the options flow. ``self.config_entry`` is provided by Home Assistant."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
@@ -286,7 +278,9 @@ class AirseekersOptionsFlow(OptionsFlow):
                 ): bool,
                 vol.Optional(
                     CONF_DISABLE_CAMERAS_WHEN_DOCKED,
-                    default=_d(CONF_DISABLE_CAMERAS_WHEN_DOCKED, DEFAULT_DISABLE_CAMERAS_WHEN_DOCKED),
+                    default=_d(
+                        CONF_DISABLE_CAMERAS_WHEN_DOCKED, DEFAULT_DISABLE_CAMERAS_WHEN_DOCKED
+                    ),
                 ): bool,
                 vol.Optional(
                     CONF_DISABLE_CAMERAS_AT_NIGHT,

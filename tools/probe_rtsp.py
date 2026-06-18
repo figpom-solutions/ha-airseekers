@@ -25,11 +25,11 @@ Usage:
 # =============================================================================
 
 import argparse
-import re
+import contextlib
+from datetime import UTC, datetime
+from pathlib import Path
 import socket
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import urlparse
 
 REPORTS_DIR = Path(__file__).parent / "reports"
@@ -37,6 +37,7 @@ REPORTS_DIR = Path(__file__).parent / "reports"
 # ---------------------------------------------------------------------------
 # URL helpers
 # ---------------------------------------------------------------------------
+
 
 def parse_rtsp_url(raw_url: str) -> tuple[str, int, str, str]:
     """
@@ -72,6 +73,7 @@ def parse_rtsp_url(raw_url: str) -> tuple[str, int, str, str]:
 # ---------------------------------------------------------------------------
 # Raw RTSP OPTIONS
 # ---------------------------------------------------------------------------
+
 
 def rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
     """
@@ -114,7 +116,7 @@ def rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
             if not chunk:
                 break
             buf += chunk
-    except (socket.timeout, OSError) as exc:
+    except (TimeoutError, OSError) as exc:
         result["error"] = f"Read error: {exc}"
         return result
     finally:
@@ -132,10 +134,8 @@ def rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
     # Parse status code from "RTSP/1.0 200 OK"
     parts = lines[0].split(" ", 2)
     if len(parts) >= 2:
-        try:
+        with contextlib.suppress(ValueError):
             result["status_code"] = int(parts[1])
-        except ValueError:
-            pass
 
     # Parse headers
     for line in lines[1:]:
@@ -150,6 +150,7 @@ def rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
 # Report
 # ---------------------------------------------------------------------------
 
+
 def build_report(
     redacted_url: str,
     host: str,
@@ -157,7 +158,7 @@ def build_report(
     timeout: float,
     probe: dict,
 ) -> str:
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     public = probe["headers"].get("Public", probe["headers"].get("public", "_not present_"))
 
     if probe["error"]:
@@ -165,13 +166,14 @@ def build_report(
     elif probe["status_code"] == 401:
         outcome = "**401 Unauthorized** — authentication required. No further attempts made."
     elif probe["status_code"] == 200:
-        outcome = f"**200 OK** — server is responding."
+        outcome = "**200 OK** — server is responding."
     else:
         outcome = f"**Status:** {probe['status_line']}"
 
-    headers_md = "\n".join(
-        f"| `{k}` | `{v}` |" for k, v in probe["headers"].items()
-    ) or "_no headers parsed_"
+    headers_md = (
+        "\n".join(f"| `{k}` | `{v}` |" for k, v in probe["headers"].items())
+        or "_no headers parsed_"
+    )
 
     return f"""# RTSP Probe Report
 
@@ -187,7 +189,7 @@ def build_report(
 
 {outcome}
 
-**Status line:** `{probe['status_line'] or '(none)'}`
+**Status line:** `{probe["status_line"] or "(none)"}`
 **Public (supported methods):** `{public}`
 
 ---
@@ -216,6 +218,7 @@ def build_report(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -253,7 +256,9 @@ def main() -> None:
 
     raw_url = args.url or args.positional_url
     if not raw_url:
-        print("[!] Error: provide an RTSP URL as a positional argument or via --url.", file=sys.stderr)
+        print(
+            "[!] Error: provide an RTSP URL as a positional argument or via --url.", file=sys.stderr
+        )
         sys.exit(1)
 
     try:

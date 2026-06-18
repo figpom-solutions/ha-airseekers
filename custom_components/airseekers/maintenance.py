@@ -113,7 +113,9 @@ class MaintenanceManager:
                 "blade_warning_percent",
                 opts.get(CONF_BLADE_WARNING_PERCENT, DEFAULT_BLADE_WARNING_PERCENT),
             ),
-            "blade_baseline_hours": stored.get("blade_baseline_hours", self._current_mowing_hours()),
+            "blade_baseline_hours": stored.get(
+                "blade_baseline_hours", self._current_mowing_hours()
+            ),
             "log": stored.get("log", []),
             "notified": stored.get("notified", {}),
         }

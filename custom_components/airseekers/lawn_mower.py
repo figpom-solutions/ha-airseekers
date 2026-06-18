@@ -74,10 +74,15 @@ class AirseekersLawnMower(AirseekersEntity, LawnMowerEntity):
         try:
             await coro
         except AirseekersUnsupportedFeature as err:
-            raise HomeAssistantError(f"AIRSEEKERS: operation not supported by this backend: {err}") from err
+            raise HomeAssistantError(
+                f"AIRSEEKERS: operation not supported by this backend: {err}"
+            ) from err
         except AirseekersError as err:
             raise HomeAssistantError(f"AIRSEEKERS command failed: {err}") from err
-        await self.coordinator.async_request_refresh()
+        # Force an immediate (non-debounced) refresh so the new activity is reflected at once —
+        # async_request_refresh() collapses rapid command sequences (e.g. start then pause) and would
+        # leave the entity showing the prior state until the next poll.
+        await self.coordinator.async_refresh()
 
     async def async_start_mowing(self) -> None:
         await self._run(self.coordinator.client.async_start_mowing(self._device_id))

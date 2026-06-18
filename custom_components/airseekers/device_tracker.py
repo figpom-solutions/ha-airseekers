@@ -46,4 +46,4 @@ class AirseekersDeviceTracker(AirseekersEntity, TrackerEntity):
     @property
     def location_accuracy(self) -> int:
         acc = self._status.gps_accuracy
-        return int(round(acc)) if acc is not None else 0
+        return round(acc) if acc is not None else 0

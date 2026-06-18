@@ -36,14 +36,15 @@ import argparse
 import asyncio
 import datetime
 import os
-import sys
 from pathlib import Path
+import sys
 
 REPORTS_DIR = Path(__file__).parent / "reports"
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ensure_reports_dir() -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -70,6 +71,7 @@ def redact(value: str | None) -> str:
 # Config loader
 # ---------------------------------------------------------------------------
 
+
 def load_config(env_file: str) -> dict:
     """
     Load configuration from .env file (via python-dotenv if available)
@@ -80,13 +82,11 @@ def load_config(env_file: str) -> dict:
     # Try python-dotenv
     try:
         from dotenv import load_dotenv  # type: ignore
+
         if env_path.exists():
             load_dotenv(dotenv_path=env_path, override=False)
         else:
-            print(
-                f"[config] .env file not found at {env_path}; "
-                "reading from environment only."
-            )
+            print(f"[config] .env file not found at {env_path}; reading from environment only.")
     except ImportError:
         print(
             "[config] python-dotenv not installed — reading from environment only.\n"
@@ -121,6 +121,7 @@ def validate_config(config: dict) -> list[str]:
 # Airseekers mobile application using a traffic capture tool on a device
 # and account you own. Document the source of each endpoint in comments.
 
+
 class AirseekersCloudClient:
     """
     Skeleton async API client for the Airseekers cloud service.
@@ -153,8 +154,7 @@ class AirseekersCloudClient:
           - NEVER log the token value; use redact() for any debug output
         """
         raise NotImplementedError(
-            "login() not yet implemented. "
-            "Capture the login request from the official app first."
+            "login() not yet implemented. Capture the login request from the official app first."
         )
 
     async def refresh_token(self) -> str:
@@ -199,6 +199,7 @@ class AirseekersCloudClient:
 # Async main
 # ---------------------------------------------------------------------------
 
+
 async def async_main(args: argparse.Namespace) -> int:
     """
     Validates configuration, prints what the client WOULD do (redacted),
@@ -214,7 +215,7 @@ async def async_main(args: argparse.Namespace) -> int:
     missing = validate_config(config)
 
     if missing:
-        print(f"ERROR: The following required environment variables are not set:")
+        print("ERROR: The following required environment variables are not set:")
         for name in missing:
             print(f"  - {name}")
         print()
@@ -280,11 +281,11 @@ async def async_main(args: argparse.Namespace) -> int:
 # main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Skeleton cloud API client for Airseekers robot. "
-            "NOT functional — see module docstring."
+            "Skeleton cloud API client for Airseekers robot. NOT functional — see module docstring."
         )
     )
     parser.add_argument(

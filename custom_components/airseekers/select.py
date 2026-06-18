@@ -11,6 +11,8 @@ project does not fabricate robot features.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -74,9 +76,7 @@ class AirseekersZoneSelect(AirseekersEntity, SelectEntity):
         current = self._status.current_zone
         if current is None:
             return None
-        return next(
-            (z.name for z in self.coordinator.data.zones if z.zone_id == current), None
-        )
+        return next((z.name for z in self.coordinator.data.zones if z.zone_id == current), None)
 
     async def async_select_option(self, option: str) -> None:
         zone_id = self._zone_by_name().get(option)
@@ -96,7 +96,7 @@ class AirseekersBackendSelect(AirseekersEntity, SelectEntity):
 
     _attr_name = "Backend"
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = list(BACKENDS)
+    _attr_options: ClassVar[list[str]] = list(BACKENDS)
 
     def __init__(
         self,
@@ -127,7 +127,7 @@ class AirseekersCameraModeSelect(AirseekersEntity, SelectEntity):
 
     _attr_name = "Camera mode"
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = list(CAMERA_DISCOVERY_MODES)
+    _attr_options: ClassVar[list[str]] = list(CAMERA_DISCOVERY_MODES)
 
     def __init__(
         self,
@@ -154,7 +154,7 @@ class AirseekersMowingModeSelect(AirseekersEntity, SelectEntity):
     """Select the mowing mode (when the backend supports it)."""
 
     _attr_name = "Mowing mode"
-    _attr_options = list(MOWING_MODES)
+    _attr_options: ClassVar[list[str]] = list(MOWING_MODES)
 
     def __init__(self, coordinator: AirseekersDataUpdateCoordinator) -> None:
         super().__init__(coordinator)

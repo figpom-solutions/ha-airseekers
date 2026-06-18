@@ -14,7 +14,7 @@ without renaming anything:
 | Number | `number.tron_cutting_height` |
 | Selects | `select.tron_zone`, `select.tron_mowing_mode` |
 | Switches | `switch.tron_camera_privacy`, `switch.tron_night_mowing` |
-| Maintenance | `sensor.tron_warranty_status`, `sensor.tron_blade_status`, `sensor.tron_blade_life_remaining`, … |
+| Maintenance | `sensor.tron_warranty_status`, `sensor.tron_blade_status`, `sensor.tron_blade_life_remaining_percent`, … |
 
 These IDs are forced at creation and kept stable across versions by the entity registry (via each
 entity's `unique_id`), so a dashboard built on them will not break when the integration updates.
@@ -117,7 +117,7 @@ lovelace:
       data:
         title: AIRSEEKERS blades
         message: >-
-          Blades reached {{ states('sensor.tron_blade_runtime') }} h. Plan a replacement.
+          Blades reached {{ states('sensor.tron_blade_runtime_hours') }} h. Plan a replacement.
 
 # 7) Block mowing on critical maintenance / weather
 - alias: AIRSEEKERS - block mowing on critical condition

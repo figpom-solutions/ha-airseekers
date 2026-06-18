@@ -26,12 +26,12 @@ Usage:
 # =============================================================================
 
 import argparse
+from datetime import UTC, datetime
+from pathlib import Path
 import sys
 import urllib.error
-import urllib.request
-from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import urlparse, urlunparse
+import urllib.request
 
 REPORTS_DIR = Path(__file__).parent / "reports"
 MAX_BODY_BYTES = 4096
@@ -40,6 +40,7 @@ MAX_BODY_BYTES = 4096
 # ---------------------------------------------------------------------------
 # URL helpers
 # ---------------------------------------------------------------------------
+
 
 def redact_url(raw_url: str) -> str:
     """Replace user:password in URL with ***:***."""
@@ -67,6 +68,7 @@ def strip_credentials(raw_url: str) -> str:
 # Classification
 # ---------------------------------------------------------------------------
 
+
 def classify_content_type(ct: str) -> str:
     ct_lower = ct.lower().split(";")[0].strip()
     if "multipart/x-mixed-replace" in ct_lower:
@@ -81,6 +83,7 @@ def classify_content_type(ct: str) -> str:
 # ---------------------------------------------------------------------------
 # Probe
 # ---------------------------------------------------------------------------
+
 
 def probe_url(url: str, timeout: float) -> dict:
     """
@@ -134,8 +137,9 @@ def probe_url(url: str, timeout: float) -> dict:
 # Report
 # ---------------------------------------------------------------------------
 
+
 def build_report(redacted_url: str, timeout: float, probe: dict) -> str:
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     if probe["error"]:
         outcome = f"**Error:** {probe['error']}"
@@ -147,19 +151,21 @@ def build_report(redacted_url: str, timeout: float, probe: dict) -> str:
 
     # Redact Authorization headers in the displayed headers table
     safe_headers = {
-        k: ("***REDACTED***" if k.lower() in ("authorization", "www-authenticate", "proxy-authorization") else v)
+        k: (
+            "***REDACTED***"
+            if k.lower() in ("authorization", "www-authenticate", "proxy-authorization")
+            else v
+        )
         for k, v in probe["headers"].items()
     }
-    headers_md = "\n".join(
-        f"| `{k}` | `{v}` |" for k, v in safe_headers.items()
-    ) or "_no headers_"
+    headers_md = "\n".join(f"| `{k}` | `{v}` |" for k, v in safe_headers.items()) or "_no headers_"
 
     return f"""# MJPEG / Snapshot Probe Report
 
 **URL (redacted):** `{redacted_url}`
 **Probe time:** {ts}
 **Timeout:** {timeout}s
-**Body read (max {MAX_BODY_BYTES} bytes):** {probe['body_preview_bytes']} bytes read
+**Body read (max {MAX_BODY_BYTES} bytes):** {probe["body_preview_bytes"]} bytes read
 
 ---
 
@@ -167,8 +173,8 @@ def build_report(redacted_url: str, timeout: float, probe: dict) -> str:
 
 {outcome}
 
-**Content-Type:** `{probe['content_type'] or '(not present)'}`
-**Body preview bytes read:** {probe['body_preview_bytes']}
+**Content-Type:** `{probe["content_type"] or "(not present)"}`
+**Body preview bytes read:** {probe["body_preview_bytes"]}
 
 ---
 
@@ -196,6 +202,7 @@ def build_report(redacted_url: str, timeout: float, probe: dict) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -228,7 +235,9 @@ def main() -> None:
 
     parsed = urlparse(args.url)
     if parsed.scheme not in ("http", "https"):
-        print(f"[!] Error: expected http:// or https:// URL, got: {parsed.scheme!r}", file=sys.stderr)
+        print(
+            f"[!] Error: expected http:// or https:// URL, got: {parsed.scheme!r}", file=sys.stderr
+        )
         sys.exit(1)
 
     redacted_url = redact_url(args.url)

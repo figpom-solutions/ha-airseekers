@@ -39,7 +39,7 @@ async def test_mark_blades_changed_resets_and_logs(hass) -> None:
     assert manager.log[0]["type"] == "blade_change"
     assert manager.log[0]["comment"] == "test change"
     # Runtime reset to ~0 right after a change.
-    assert float(hass.states.get("sensor.tron_blade_runtime").state) == 0.0
+    assert float(hass.states.get("sensor.tron_blade_runtime_hours").state) == 0.0
 
 
 async def test_add_maintenance_event_fires_bus_event(hass) -> None:
@@ -84,14 +84,18 @@ async def test_alerts_do_not_spam(hass) -> None:
 
 
 async def test_reset_alerts_rearms(hass) -> None:
-    with patch(
-        "custom_components.airseekers.maintenance.persistent_notification.async_create"
-    ) as mock_create, patch(
-        "custom_components.airseekers.maintenance.persistent_notification.async_dismiss"
+    with (
+        patch(
+            "custom_components.airseekers.maintenance.persistent_notification.async_create"
+        ) as mock_create,
+        patch("custom_components.airseekers.maintenance.persistent_notification.async_dismiss"),
     ):
         entry = await async_setup_stub(hass)
         await hass.services.async_call(
-            DOMAIN, "set_purchase_date", {"entity_id": MOWER, "purchase_date": "2020-01-01"}, blocking=True
+            DOMAIN,
+            "set_purchase_date",
+            {"entity_id": MOWER, "purchase_date": "2020-01-01"},
+            blocking=True,
         )
         await hass.async_block_till_done()
         manager = entry.runtime_data.maintenance

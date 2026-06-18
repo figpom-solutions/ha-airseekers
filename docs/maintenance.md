@@ -8,7 +8,7 @@ Home Assistant `Store` (these are durable counters, not transient timers — the
 | Item | Entity | Source |
 |------|--------|--------|
 | Warranty end date / days remaining / status | `sensor.*_warranty_end_date` / `_warranty_days_remaining` / `_warranty_status` | purchase date + duration |
-| Blade runtime / life remaining / status | `sensor.*_blade_runtime` / `_blade_life_remaining` / `_blade_status` | device mowing hours − baseline at last change |
+| Blade runtime / life remaining / status | `sensor.*_blade_runtime_hours` / `_blade_life_remaining_percent` / `_blade_status` | device mowing hours − baseline at last change |
 | Last / next blade change | `sensor.*_last_blade_change` / `_next_blade_change_estimate` | stored date + usage rate |
 | Total mowing time / cycles | `sensor.*_total_mowing_time` / `_total_mowing_cycles` | device counters |
 | Maintenance status | `sensor.*_maintenance_status` | blades-replace OR active error |

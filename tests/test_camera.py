@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from homeassistant.components.camera import async_get_image
 from homeassistant.exceptions import HomeAssistantError
+import pytest
 
 from custom_components.airseekers.const import CONF_ENABLE_ALL_CAMERAS, CONF_PRIVACY_MODE
 

@@ -82,9 +82,7 @@ async def async_get_config_entry_diagnostics(
         },
         "update": {
             "interval_seconds": (
-                coordinator.update_interval.total_seconds()
-                if coordinator.update_interval
-                else None
+                coordinator.update_interval.total_seconds() if coordinator.update_interval else None
             ),
             "last_update_success": coordinator.last_update_success,
         },

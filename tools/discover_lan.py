@@ -30,13 +30,10 @@ awareness (a warning is printed before any TCP SYN packets are sent).
 import argparse
 import datetime
 import ipaddress
-import os
-import socket
-import struct
-import subprocess
-import sys
-import time
 from pathlib import Path
+import socket
+import subprocess
+import time
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -64,6 +61,7 @@ REPORTS_DIR = Path(__file__).parent / "reports"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _ensure_reports_dir() -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     return REPORTS_DIR
@@ -86,16 +84,13 @@ def _redact(value: str) -> str:
 # 1. mDNS discovery (lazy zeroconf import)
 # ---------------------------------------------------------------------------
 
+
 def discover_mdns(timeout: float) -> list[dict]:
     """Browse mDNS for common service types; return list of host dicts."""
     try:
         from zeroconf import ServiceBrowser, Zeroconf  # type: ignore
-        from zeroconf._utils.ipaddress import get_ip_address_object  # type: ignore
     except ImportError:
-        print(
-            "[mDNS] zeroconf not installed — skipping.\n"
-            "       To enable: pip install zeroconf"
-        )
+        print("[mDNS] zeroconf not installed — skipping.\n       To enable: pip install zeroconf")
         return []
 
     results: list[dict] = []
@@ -110,9 +105,7 @@ def discover_mdns(timeout: float) -> list[dict]:
         def add_service(self, zc: "Zeroconf", type_: str, name: str) -> None:
             info = zc.get_service_info(type_, name, timeout=int(timeout * 1000))
             if info:
-                addresses = [
-                    str(ipaddress.ip_address(a)) for a in info.parsed_addresses()
-                ]
+                addresses = [str(ipaddress.ip_address(a)) for a in info.parsed_addresses()]
                 results.append(
                     {
                         "source": "mDNS",
@@ -141,6 +134,7 @@ def discover_mdns(timeout: float) -> list[dict]:
 # ---------------------------------------------------------------------------
 # 2. SSDP discovery (stdlib only)
 # ---------------------------------------------------------------------------
+
 
 def discover_ssdp(timeout: float) -> list[dict]:
     """Send a single SSDP M-SEARCH and collect responses."""
@@ -186,7 +180,7 @@ def discover_ssdp(timeout: float) -> list[dict]:
                         "server": server_hdr,
                     }
                 )
-            except socket.timeout:
+            except TimeoutError:
                 break
     finally:
         sock.close()
@@ -198,33 +192,28 @@ def discover_ssdp(timeout: float) -> list[dict]:
 # 3. ARP table read (read-only, no packets)
 # ---------------------------------------------------------------------------
 
+
 def read_arp_table() -> list[dict]:
     """Read local ARP/neighbour table; no packets sent."""
     results: list[dict] = []
 
     # Try `ip neigh` first (Linux)
     try:
-        out = subprocess.check_output(
-            ["ip", "neigh"], stderr=subprocess.DEVNULL, text=True
-        )
+        out = subprocess.check_output(["ip", "neigh"], stderr=subprocess.DEVNULL, text=True)
         for line in out.splitlines():
             parts = line.split()
             if len(parts) >= 5 and parts[1] == "dev":
                 state = parts[-1] if parts else "UNKNOWN"
                 ip = parts[0]
                 mac = parts[4] if len(parts) > 4 else ""
-                results.append(
-                    {"source": "ARP/ip-neigh", "ip": ip, "mac": mac, "state": state}
-                )
+                results.append({"source": "ARP/ip-neigh", "ip": ip, "mac": mac, "state": state})
         return results
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
 
     # Fallback: `arp -a` (macOS / older Linux)
     try:
-        out = subprocess.check_output(
-            ["arp", "-a"], stderr=subprocess.DEVNULL, text=True
-        )
+        out = subprocess.check_output(["arp", "-a"], stderr=subprocess.DEVNULL, text=True)
         for line in out.splitlines():
             # Format: hostname (ip) at mac [ether] on iface
             parts = line.split()
@@ -256,6 +245,7 @@ def read_arp_table() -> list[dict]:
 # 4. Light TCP-connect check (only on explicit --host or user-confirmed IP)
 # ---------------------------------------------------------------------------
 
+
 def tcp_connect_check(host: str, ports: list[int], timeout: float) -> list[dict]:
     """
     Attempt TCP connect to each port on host.
@@ -274,7 +264,7 @@ def tcp_connect_check(host: str, ports: list[int], timeout: float) -> list[dict]
                         "status": "open",
                     }
                 )
-        except (ConnectionRefusedError, socket.timeout, OSError):
+        except (TimeoutError, ConnectionRefusedError, OSError):
             results.append(
                 {
                     "port": port,
@@ -289,6 +279,7 @@ def tcp_connect_check(host: str, ports: list[int], timeout: float) -> list[dict]
 # Reverse-DNS helper
 # ---------------------------------------------------------------------------
 
+
 def reverse_dns(ip: str) -> str:
     try:
         return socket.gethostbyaddr(ip)[0]
@@ -299,6 +290,7 @@ def reverse_dns(ip: str) -> str:
 # ---------------------------------------------------------------------------
 # Report writer
 # ---------------------------------------------------------------------------
+
 
 def write_report(
     report_path: Path,
@@ -382,10 +374,9 @@ def write_report(
 # main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Discover robot host on the LAN (non-intrusive)."
-    )
+    parser = argparse.ArgumentParser(description="Discover robot host on the LAN (non-intrusive).")
     parser.add_argument(
         "--timeout", type=float, default=3.0, help="Discovery timeout in seconds (default: 3)"
     )
@@ -448,9 +439,7 @@ def main() -> None:
             print(f"    Checking {h}...")
             tcp_results[h] = tcp_connect_check(h, ports, args.timeout)
             open_ports = [c for c in tcp_results[h] if c["status"] == "open"]
-            print(
-                f"    {h}: {len(open_ports)} open port(s) out of {len(ports)} checked."
-            )
+            print(f"    {h}: {len(open_ports)} open port(s) out of {len(ports)} checked.")
 
     # --- Report ---
     _ensure_reports_dir()

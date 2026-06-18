@@ -39,7 +39,6 @@ _SENSITIVE_QUERY_KEYS = frozenset(
         "x-amz-signature",
         "x-amz-credential",
         "se",
-        "sig",
         "st",
     }
 )

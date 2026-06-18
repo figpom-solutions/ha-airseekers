@@ -29,12 +29,10 @@ packet in pure stdlib so --connect works without any extra dependencies.
 
 import argparse
 import datetime
-import os
+from pathlib import Path
 import random
 import socket
 import struct
-import sys
-from pathlib import Path
 
 DEFAULT_PORTS = "1883,8883"
 REPORTS_DIR = Path(__file__).parent / "reports"
@@ -43,6 +41,7 @@ REPORTS_DIR = Path(__file__).parent / "reports"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ensure_reports_dir() -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -62,6 +61,7 @@ def _random_client_id() -> str:
 # TCP connect check
 # ---------------------------------------------------------------------------
 
+
 def tcp_connect(host: str, port: int, timeout: float) -> tuple[bool, str]:
     """Return (is_open, message)."""
     try:
@@ -69,7 +69,7 @@ def tcp_connect(host: str, port: int, timeout: float) -> tuple[bool, str]:
             return True, f"TCP port {port} is OPEN."
     except ConnectionRefusedError:
         return False, f"TCP port {port}: Connection refused."
-    except socket.timeout:
+    except TimeoutError:
         return False, f"TCP port {port}: Timed out."
     except OSError as exc:
         return False, f"TCP port {port}: {exc}"
@@ -78,6 +78,7 @@ def tcp_connect(host: str, port: int, timeout: float) -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # Pure-stdlib MQTT CONNECT packet builder
 # ---------------------------------------------------------------------------
+
 
 def _build_mqtt_connect_packet(client_id: str) -> bytes:
     """
@@ -93,10 +94,10 @@ def _build_mqtt_connect_packet(client_id: str) -> bytes:
       Client Identifier: client_id (UTF-8 prefixed)
     """
     # Variable header (10 bytes for MQTT 3.1.1)
-    protocol_name = b"\x00\x04MQTT"   # length-prefixed "MQTT"
-    protocol_level = b"\x04"           # MQTT 3.1.1
-    connect_flags = b"\x02"            # clean session
-    keep_alive = struct.pack("!H", 60) # 60 seconds big-endian
+    protocol_name = b"\x00\x04MQTT"  # length-prefixed "MQTT"
+    protocol_level = b"\x04"  # MQTT 3.1.1
+    connect_flags = b"\x02"  # clean session
+    keep_alive = struct.pack("!H", 60)  # 60 seconds big-endian
 
     variable_header = protocol_name + protocol_level + connect_flags + keep_alive
 
@@ -157,6 +158,7 @@ def _parse_connack(data: bytes) -> tuple[bool, str]:
 # MQTT connect attempt — stdlib fallback
 # ---------------------------------------------------------------------------
 
+
 def mqtt_connect_stdlib(host: str, port: int, timeout: float) -> dict:
     """
     Attempt a single MQTT CONNECT via raw socket.
@@ -180,7 +182,7 @@ def mqtt_connect_stdlib(host: str, port: int, timeout: float) -> dict:
         result["description"] = description
     except ConnectionRefusedError:
         result["description"] = "Connection refused"
-    except socket.timeout:
+    except TimeoutError:
         result["description"] = "Timed out waiting for CONNACK"
     except OSError as exc:
         result["description"] = f"OSError: {exc}"
@@ -190,6 +192,7 @@ def mqtt_connect_stdlib(host: str, port: int, timeout: float) -> dict:
 # ---------------------------------------------------------------------------
 # MQTT connect attempt — paho-mqtt
 # ---------------------------------------------------------------------------
+
 
 def mqtt_connect_paho(host: str, port: int, timeout: float) -> dict | None:
     """
@@ -218,7 +221,7 @@ def mqtt_connect_paho(host: str, port: int, timeout: float) -> dict | None:
 
     event = threading.Event()
 
-    def on_connect(client, userdata, flags, rc):  # noqa: ANN001
+    def on_connect(client, userdata, flags, rc):
         result["accepted"] = rc == 0
         rc_map = {
             0: "Connection Accepted",
@@ -250,6 +253,7 @@ def mqtt_connect_paho(host: str, port: int, timeout: float) -> dict | None:
 # Report writer
 # ---------------------------------------------------------------------------
 
+
 def write_report(
     report_path: Path,
     tcp_results: list[dict],
@@ -278,7 +282,9 @@ def write_report(
 
     if connect_result:
         lines += ["## MQTT CONNECT Attempt", ""]
-        accepted_str = "YES — broker accepted anonymous connection" if connect_result["accepted"] else "NO"
+        accepted_str = (
+            "YES — broker accepted anonymous connection" if connect_result["accepted"] else "NO"
+        )
         lines.append(f"**Accepted:** {accepted_str}")
         lines.append(f"**Description:** {connect_result['description']}")
         lines.append(f"**Method:** {connect_result['method']}")
@@ -296,6 +302,7 @@ def write_report(
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(

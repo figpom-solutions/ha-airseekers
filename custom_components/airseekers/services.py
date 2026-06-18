@@ -10,8 +10,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_DEVICE_ID, ATTR_ENTITY_ID
 from homeassistant.core import (
@@ -22,7 +20,12 @@ from homeassistant.core import (
     callback,
 )
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers import config_validation as cv, device_registry as dr, entity_registry as er
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    entity_registry as er,
+)
+import voluptuous as vol
 
 from .api import AirseekersError
 from .const import (
@@ -105,11 +108,21 @@ def async_setup_services(hass: HomeAssistant) -> None:
     if hass.services.has_service(DOMAIN, SERVICE_REFRESH):
         return
 
-    async def _wrap(fn, call: ServiceCall) -> None:
-        try:
-            await fn(call)
-        except AirseekersError as err:
-            raise HomeAssistantError(f"AIRSEEKERS service failed: {err}") from err
+    def _wrap(fn):
+        """Wrap a handler as a coroutine function HA will await.
+
+        Registering ``lambda c: _coro(c)`` would hand HA a *sync* callable that merely returns an
+        un-awaited coroutine; HA never awaits it and the service silently no-ops. Returning a real
+        ``async def`` ensures the handler is detected as a coroutine function and awaited.
+        """
+
+        async def _handler(call: ServiceCall) -> None:
+            try:
+                await fn(call)
+            except AirseekersError as err:
+                raise HomeAssistantError(f"AIRSEEKERS service failed: {err}") from err
+
+        return _handler
 
     async def handle_refresh(call: ServiceCall) -> None:
         for entry in _entries_from_call(hass, call):
@@ -179,23 +192,23 @@ def async_setup_services(hass: HomeAssistant) -> None:
         return {"results": results}
 
     # Register --------------------------------------------------------------
-    hass.services.async_register(DOMAIN, SERVICE_REFRESH, lambda c: _wrap(handle_refresh, c), _schema())
+    hass.services.async_register(DOMAIN, SERVICE_REFRESH, _wrap(handle_refresh), _schema())
     hass.services.async_register(
         DOMAIN,
         SERVICE_START_ZONE,
-        lambda c: _wrap(handle_start_zone, c),
+        _wrap(handle_start_zone),
         _schema({vol.Required("zone_id"): cv.string}),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_CUTTING_HEIGHT,
-        lambda c: _wrap(handle_set_cutting_height, c),
+        _wrap(handle_set_cutting_height),
         _schema({vol.Required("height_mm"): vol.All(vol.Coerce(int), vol.Range(min=0, max=500))}),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SEND_COMMAND_RAW,
-        lambda c: _wrap(handle_send_command_raw, c),
+        _wrap(handle_send_command_raw),
         _schema(
             {
                 vol.Required("command"): cv.string,
@@ -206,25 +219,25 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_PURCHASE_DATE,
-        lambda c: _wrap(handle_set_purchase_date, c),
+        _wrap(handle_set_purchase_date),
         _schema({vol.Required("purchase_date"): cv.date}),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_WARRANTY_DURATION,
-        lambda c: _wrap(handle_set_warranty_duration, c),
+        _wrap(handle_set_warranty_duration),
         _schema({vol.Required("months"): vol.All(vol.Coerce(int), vol.Range(min=0, max=240))}),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_MARK_BLADES_CHANGED,
-        lambda c: _wrap(handle_mark_blades_changed, c),
+        _wrap(handle_mark_blades_changed),
         _schema({vol.Optional("comment"): cv.string}),
     )
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_MAINTENANCE_EVENT,
-        lambda c: _wrap(handle_add_maintenance_event, c),
+        _wrap(handle_add_maintenance_event),
         _schema(
             {
                 vol.Required("event_type"): vol.In(MAINTENANCE_EVENT_TYPES),
@@ -235,7 +248,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN,
         SERVICE_RESET_MAINTENANCE_COUNTERS,
-        lambda c: _wrap(handle_reset_maintenance_counters, c),
+        _wrap(handle_reset_maintenance_counters),
         _schema(),
     )
     hass.services.async_register(

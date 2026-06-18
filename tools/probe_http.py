@@ -27,11 +27,8 @@ No path enumeration, no brute force.
 import argparse
 import datetime
 import http.client
-import ipaddress
-import socket
-import ssl
-import sys
 from pathlib import Path
+import ssl
 
 DEFAULT_PORTS = "80,443,8080"
 REPORTS_DIR = Path(__file__).parent / "reports"
@@ -45,6 +42,7 @@ _PRESENCE_ONLY_HEADERS = {"www-authenticate", "proxy-authenticate"}
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ensure_reports_dir() -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -73,6 +71,7 @@ def _safe_header(name: str, value: str) -> str:
 # HTTP probe (stdlib http.client)
 # ---------------------------------------------------------------------------
 
+
 def probe_port_stdlib(host: str, port: int, timeout: float) -> dict:
     """Probe a single port with stdlib http.client. Returns result dict."""
     use_ssl = _is_ssl_port(port)
@@ -96,8 +95,14 @@ def probe_port_stdlib(host: str, port: int, timeout: float) -> dict:
     conn_cls = http.client.HTTPSConnection if use_ssl else http.client.HTTPConnection
 
     try:
-        conn = conn_cls(host, port, timeout=timeout, context=ctx) if use_ssl else conn_cls(host, port, timeout=timeout)
-        conn.request("GET", "/", headers={"User-Agent": "airseekers-probe/1.0", "Connection": "close"})
+        conn = (
+            conn_cls(host, port, timeout=timeout, context=ctx)
+            if use_ssl
+            else conn_cls(host, port, timeout=timeout)
+        )
+        conn.request(
+            "GET", "/", headers={"User-Agent": "airseekers-probe/1.0", "Connection": "close"}
+        )
         resp = conn.getresponse()
         result["status"] = resp.status
         result["reason"] = resp.reason
@@ -113,7 +118,7 @@ def probe_port_stdlib(host: str, port: int, timeout: float) -> dict:
             preview = repr(body[:200])
         result["content_preview"] = preview
         conn.close()
-    except (ConnectionRefusedError, socket.timeout, OSError) as exc:
+    except (TimeoutError, ConnectionRefusedError, OSError) as exc:
         result["error"] = f"{type(exc).__name__}: {exc}"
     except Exception as exc:
         result["error"] = f"Unexpected: {type(exc).__name__}: {exc}"
@@ -125,10 +130,12 @@ def probe_port_stdlib(host: str, port: int, timeout: float) -> dict:
 # Optional aiohttp probe (lazy import)
 # ---------------------------------------------------------------------------
 
+
 def probe_port_aiohttp(host: str, port: int, timeout: float) -> dict | None:
     """Try to use aiohttp for probing. Returns None if not available."""
     try:
         import asyncio
+
         import aiohttp  # type: ignore
     except ImportError:
         return None
@@ -150,26 +157,29 @@ def probe_port_aiohttp(host: str, port: int, timeout: float) -> dict | None:
         }
         connector = aiohttp.TCPConnector(ssl=False)
         try:
-            async with aiohttp.ClientSession(connector=connector) as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession(connector=connector) as session,
+                session.get(
                     url,
                     timeout=aiohttp.ClientTimeout(total=timeout),
                     allow_redirects=False,
                     headers={"User-Agent": "airseekers-probe/1.0"},
-                ) as resp:
-                    result["status"] = resp.status
-                    result["reason"] = resp.reason
-                    for hname, hval in resp.headers.items():
-                        result["headers"][hname] = _safe_header(hname, hval)
-                    body = await resp.read()
-                    preview = body.decode("utf-8", errors="replace")[:200]
-                    result["content_preview"] = preview
+                ) as resp,
+            ):
+                result["status"] = resp.status
+                result["reason"] = resp.reason
+                for hname, hval in resp.headers.items():
+                    result["headers"][hname] = _safe_header(hname, hval)
+                body = await resp.read()
+                preview = body.decode("utf-8", errors="replace")[:200]
+                result["content_preview"] = preview
         except Exception as exc:
             result["error"] = f"{type(exc).__name__}: {exc}"
         return result
 
     try:
         import asyncio
+
         return asyncio.run(_fetch())
     except Exception as exc:
         return {"error": str(exc), "host": host, "port": port}
@@ -178,6 +188,7 @@ def probe_port_aiohttp(host: str, port: int, timeout: float) -> dict | None:
 # ---------------------------------------------------------------------------
 # Report writer
 # ---------------------------------------------------------------------------
+
 
 def write_report(report_path: Path, results: list[dict], args: argparse.Namespace) -> None:
     ts = datetime.datetime.now().isoformat(timespec="seconds")
@@ -221,6 +232,7 @@ def write_report(report_path: Path, results: list[dict], args: argparse.Namespac
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(

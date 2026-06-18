@@ -31,13 +31,14 @@ Usage:
 # =============================================================================
 
 import argparse
+import contextlib
+from datetime import UTC, datetime
+from pathlib import Path
 import socket
 import sys
 import urllib.error
-import urllib.request
-from datetime import datetime, timezone
-from pathlib import Path
 from urllib.parse import urlparse, urlunparse
+import urllib.request
 
 REPORTS_DIR = Path(__file__).parent / "reports"
 MAX_BODY_BYTES = 4096
@@ -46,6 +47,7 @@ MAX_BODY_BYTES = 4096
 # ---------------------------------------------------------------------------
 # URL helpers (shared)
 # ---------------------------------------------------------------------------
+
 
 def redact_url(raw_url: str) -> str:
     """Replace user:password in URL with ***:***."""
@@ -72,6 +74,7 @@ def strip_credentials(raw_url: str) -> str:
 # ---------------------------------------------------------------------------
 # RTSP probe (inline — mirrors probe_rtsp.py logic)
 # ---------------------------------------------------------------------------
+
 
 def _rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
     request = (
@@ -101,7 +104,7 @@ def _rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
             if not chunk:
                 break
             buf += chunk
-    except (socket.timeout, OSError) as exc:
+    except (TimeoutError, OSError) as exc:
         result["error"] = f"Read error: {exc}"
         return result
     finally:
@@ -116,10 +119,8 @@ def _rtsp_options(host: str, port: int, path: str, timeout: float) -> dict:
     result["status_line"] = lines[0]
     parts = lines[0].split(" ", 2)
     if len(parts) >= 2:
-        try:
+        with contextlib.suppress(ValueError):
             result["status_code"] = int(parts[1])
-        except ValueError:
-            pass
 
     for line in lines[1:]:
         if ": " in line:
@@ -161,6 +162,7 @@ def probe_rtsp(raw_url: str, timeout: float) -> dict:
 # ---------------------------------------------------------------------------
 # HTTP(S) probe (inline — mirrors probe_mjpeg.py logic, extended for HLS)
 # ---------------------------------------------------------------------------
+
 
 def _classify_http(content_type: str, path: str) -> str:
     ct_lower = content_type.lower().split(";")[0].strip()
@@ -231,8 +233,9 @@ def probe_http(raw_url: str, timeout: float) -> dict:
 # Report builder
 # ---------------------------------------------------------------------------
 
+
 def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) -> str:
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     if probe.get("error"):
         outcome = f"**Error:** {probe['error']}"
@@ -246,12 +249,14 @@ def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) ->
 
     # Redact auth headers
     safe_headers = {
-        k: ("***REDACTED***" if k.lower() in ("authorization", "www-authenticate", "proxy-authorization") else v)
+        k: (
+            "***REDACTED***"
+            if k.lower() in ("authorization", "www-authenticate", "proxy-authorization")
+            else v
+        )
         for k, v in probe.get("headers", {}).items()
     }
-    headers_md = "\n".join(
-        f"| `{k}` | `{v}` |" for k, v in safe_headers.items()
-    ) or "_no headers_"
+    headers_md = "\n".join(f"| `{k}` | `{v}` |" for k, v in safe_headers.items()) or "_no headers_"
 
     extra_lines = ""
     if probe.get("extra"):
@@ -259,7 +264,9 @@ def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) ->
 
     body_line = ""
     if scheme in ("http", "https"):
-        body_line = f"**Body bytes read (max {MAX_BODY_BYTES}):** {probe.get('body_preview_bytes', 0)}"
+        body_line = (
+            f"**Body bytes read (max {MAX_BODY_BYTES}):** {probe.get('body_preview_bytes', 0)}"
+        )
 
     return f"""# Camera URL Probe Report
 
@@ -274,8 +281,8 @@ def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) ->
 
 {outcome}
 
-**Classification:** {probe.get('classification', '_n/a_')}
-**Content-Type:** `{probe.get('content_type') or '(not applicable / not present)'}`
+**Classification:** {probe.get("classification", "_n/a_")}
+**Content-Type:** `{probe.get("content_type") or "(not applicable / not present)"}`
 {extra_lines}
 {body_line}
 
@@ -291,7 +298,7 @@ def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) ->
 
 ## Notes
 
-- A single passive probe ({scheme.upper()} {'OPTIONS' if scheme == 'rtsp' else 'GET'}) was issued.
+- A single passive probe ({scheme.upper()} {"OPTIONS" if scheme == "rtsp" else "GET"}) was issued.
 - No credentials were tested or brute-forced.
 - If the server returned 401, this tool stopped immediately.
 - Credentials embedded in the original URL have been **redacted** in this report.
@@ -306,6 +313,7 @@ def build_report(redacted_url: str, scheme: str, timeout: float, probe: dict) ->
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

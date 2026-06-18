@@ -125,7 +125,7 @@ views:
     cards:
       - type: gauge
         name: Blade life remaining
-        entity: sensor.tron_blade_life_remaining
+        entity: sensor.tron_blade_life_remaining_percent
         min: 0
         max: 100
         severity: { green: 40, yellow: 20, red: 0 }
@@ -141,7 +141,7 @@ views:
         title: Blades
         entities:
           - entity: sensor.tron_blade_status
-          - entity: sensor.tron_blade_runtime
+          - entity: sensor.tron_blade_runtime_hours
           - entity: sensor.tron_last_blade_change
           - entity: sensor.tron_next_blade_change_estimate
           - entity: button.tron_mark_blades_changed

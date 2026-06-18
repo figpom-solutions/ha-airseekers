@@ -2,14 +2,14 @@ refresh:
   name: Refresh
   description: Force an immediate data refresh from the robot.
   target:
-    device:
+    entity:
       integration: airseekers
 
 start_zone:
   name: Start zone
   description: Start mowing a specific zone.
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     zone_id:
@@ -24,7 +24,7 @@ set_cutting_height:
   name: Set cutting height
   description: Set the cutting height in millimetres.
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     height_mm:
@@ -46,7 +46,7 @@ send_command_raw:
     Advanced/debug only. Sends a raw command to the backend. Disabled unless 'Enable raw debug
     command service' is turned on in the integration options. Use with care.
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     command:
@@ -66,7 +66,7 @@ set_purchase_date:
   name: Set purchase date
   description: Set the robot purchase date (used for warranty tracking).
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     purchase_date:
@@ -80,7 +80,7 @@ set_warranty_duration:
   name: Set warranty duration
   description: Set the warranty duration in months.
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     months:
@@ -99,7 +99,7 @@ mark_blades_changed:
   name: Mark blades changed
   description: Record a blade change now (resets blade wear counters and logs the event).
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     comment:
@@ -113,7 +113,7 @@ add_maintenance_event:
   name: Add maintenance event
   description: Add an entry to the maintenance log.
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     event_type:
@@ -142,14 +142,14 @@ reset_maintenance_counters:
   description: >-
     Reset blade wear counters and re-arm maintenance alerts. The maintenance log history is kept.
   target:
-    device:
+    entity:
       integration: airseekers
 
 export_maintenance_log:
   name: Export maintenance log
   description: Export the maintenance log (also posted as a persistent notification).
   target:
-    device:
+    entity:
       integration: airseekers
   fields:
     format:

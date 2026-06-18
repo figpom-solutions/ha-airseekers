@@ -24,19 +24,18 @@ This script does NOT guess or invent camera endpoints.
 # =============================================================================
 
 import argparse
-import socket
-import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+import socket
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 PORTS = {
-    80:   "HTTP",
-    443:  "HTTPS",
-    554:  "RTSP (standard)",
+    80: "HTTP",
+    443: "HTTPS",
+    554: "RTSP (standard)",
     8554: "RTSP (alternate)",
     8080: "HTTP alternate",
     8000: "HTTP alternate",
@@ -44,9 +43,9 @@ PORTS = {
 }
 
 TEMPLATE_ROWS = [
-    ("Front Camera",    "", "", "", ""),
-    ("Rear Camera",     "", "", "", ""),
-    ("Mapping Camera",  "", "", "", ""),
+    ("Front Camera", "", "", "", ""),
+    ("Rear Camera", "", "", "", ""),
+    ("Mapping Camera", "", "", "", ""),
     ("Obstacle Camera", "", "", "", ""),
     ("Live View (generic)", "", "", "", ""),
 ]
@@ -57,6 +56,7 @@ REPORTS_DIR = Path(__file__).parent / "reports"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def tcp_connect(host: str, port: int, timeout: float) -> bool:
     """Return True if a TCP connection to host:port succeeds within timeout."""
@@ -102,7 +102,7 @@ def md_template_table() -> str:
 
 
 def build_report(host: str, timeout: float, results: dict[int, bool]) -> str:
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     open_count = sum(1 for v in results.values() if v)
 
     return f"""# Airseekers Camera Inventory Report
@@ -170,6 +170,7 @@ you discovered, then save this report for reference.
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

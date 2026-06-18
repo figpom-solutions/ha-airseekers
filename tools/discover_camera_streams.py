@@ -26,9 +26,8 @@ handshake.
 
 import argparse
 import datetime
-import socket
-import sys
 from pathlib import Path
+import socket
 
 REPORTS_DIR = Path(__file__).parent / "reports"
 
@@ -46,12 +45,13 @@ DEFAULT_CAMERA_PORTS: list[tuple[int, str]] = [
 DEFAULT_PORTS_STR = ",".join(str(p) for p, _ in DEFAULT_CAMERA_PORTS)
 
 # Build lookup from port to label for the curated list
-_PORT_LABELS: dict[int, str] = {p: lbl for p, lbl in DEFAULT_CAMERA_PORTS}
+_PORT_LABELS: dict[int, str] = dict(DEFAULT_CAMERA_PORTS)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ensure_reports_dir() -> Path:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -65,6 +65,7 @@ def _timestamp() -> str:
 # ---------------------------------------------------------------------------
 # TCP connect check
 # ---------------------------------------------------------------------------
+
 
 def tcp_check(host: str, port: int, label: str, timeout: float) -> dict:
     """
@@ -82,7 +83,7 @@ def tcp_check(host: str, port: int, label: str, timeout: float) -> dict:
             result["status"] = "open"
     except ConnectionRefusedError:
         result["status"] = "closed (refused)"
-    except socket.timeout:
+    except TimeoutError:
         result["status"] = "filtered (timeout)"
     except OSError as exc:
         result["status"] = "error"
@@ -93,6 +94,7 @@ def tcp_check(host: str, port: int, label: str, timeout: float) -> dict:
 # ---------------------------------------------------------------------------
 # Report writer
 # ---------------------------------------------------------------------------
+
 
 def write_report(
     report_path: Path,
@@ -145,6 +147,7 @@ def write_report(
 # main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
@@ -162,7 +165,10 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--timeout", type=float, default=3.0, help="TCP connect timeout per port in seconds (default: 3)"
+        "--timeout",
+        type=float,
+        default=3.0,
+        help="TCP connect timeout per port in seconds (default: 3)",
     )
     parser.add_argument(
         "--report",
@@ -201,9 +207,7 @@ def main() -> None:
     print(f"\nReport written to: {report_path}")
 
     open_ports = [r for r in results if r["status"] == "open"]
-    print(
-        f"\nSummary: {len(open_ports)}/{len(results)} port(s) open on {args.host}."
-    )
+    print(f"\nSummary: {len(open_ports)}/{len(results)} port(s) open on {args.host}.")
     if open_ports:
         labels = ", ".join(f"{r['port']} ({r['label']})" for r in open_ports)
         print(f"  Open: {labels}")

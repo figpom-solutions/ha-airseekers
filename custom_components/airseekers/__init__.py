@@ -100,7 +100,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: AirseekersConfigEntry) 
     if unloaded and (runtime := getattr(entry, "runtime_data", None)) is not None:
         await runtime.client.async_close()
         # Remove domain services once the last entry is gone.
-        remaining = [e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id]
+        remaining = [
+            e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id != entry.entry_id
+        ]
         if not remaining:
             async_unload_services(hass)
     return unloaded
