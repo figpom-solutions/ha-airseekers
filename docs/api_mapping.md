@@ -12,6 +12,24 @@ the integration's real backends can be completed from **owner-verified** observa
 | ❓ UNVERIFIED | Plausible but unconfirmed — must be observed before use |
 | ⛔ UNKNOWN | Not known; do not guess |
 
+## Live capture findings (2026-06-18, owner's own account/network)
+
+Captured via PCAPdroid (VPN, no root) → mitmproxy SOCKS5. TLS **pinned** by the app, so domains (SNI)
+are confirmed but payloads are not yet decrypted (pending an `apk-mitm` unpinned build).
+
+| Domain (SNI) | Role | Status |
+|---|---|---|
+| `cloud-eu.airseekers-robotics.com` | Cloud **REST** API (EU) — login/status/commands | ✅ VERIFIED |
+| `a26yx9tpysif9b-ats.iot.eu-central-1.amazonaws.com` | **AWS IoT Core** (MQTT real-time, eu-central-1) | ✅ VERIFIED |
+| `z-m-gateway.facebook.com` | Facebook SDK / analytics — ignore | — |
+
+**Implications:**
+- The integration target is the **REST** host (`cloud-eu.airseekers-robotics.com`) → `CloudHttpBackend`,
+  `iot_class: cloud_polling`.
+- Real-time is **AWS IoT Core** with **mutual TLS (per-device client certificate)** → not reusable by a
+  third party (would require the robot's private key). Treat as out of scope; poll REST instead.
+- App pins certificates → decrypting REST payloads needs a repackaged build (`apk-mitm`).
+
 ## Mobile app
 
 | Item | Value | Status |
@@ -34,7 +52,8 @@ the integration's real backends can be completed from **owner-verified** observa
 | Domain | Role | Status |
 |--------|------|--------|
 | `airseekers-robotics.com` | Marketing / store | ✅ |
-| `cloud-eu.airseekers-robotics.com` | Cloud API (EU region) | 🟡 |
+| `cloud-eu.airseekers-robotics.com` | Cloud API (EU region) | ✅ (live capture 2026-06-18) |
+| `a26yx9tpysif9b-ats.iot.eu-central-1.amazonaws.com` | AWS IoT Core MQTT (mutual TLS) | ✅ (live capture 2026-06-18) |
 
 > Region matters: there may be non-EU API hosts. The owner must confirm the host **their** app uses;
 > it is a config-flow input, never hardcoded.
