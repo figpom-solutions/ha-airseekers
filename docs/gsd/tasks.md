@@ -96,9 +96,29 @@ Atomic tasks for the **current** phase. Completed phases are summarised in `.pla
 - [x] GitHub Actions CI: ruff + ruff format + pytest + hassfest + HACS validation
 - [x] README dev/CI note
 - [ ] entity-name translations (fr/en) — deferred polish (English names work today)
-- [ ] live HA stub-mode smoke → tag v0.1.0 (after CI is green)
+- [x] live HA stub-mode smoke (installed in real HA, loads, ~60 tron_* entities) — fixed coordinator setup bug
+- [ ] tag v0.1.0 (after CI green)
 
-## Done
-All 8 roadmap phases delivered. See `.planning/STATE.md` → "Next (post-milestone)".
+## Phase 9 — Stable entity convention ✅ (committed)
+- [x] deterministic `tron_*` entity_ids (build_entity_id) for all entities; stable via unique_id
+- [x] new: device_tracker.tron, switch.tron_{camera_privacy,night_mowing}, safety binaries
+  (lifted/tilted/blade_blocked), sensor.tron_{firmware,area}, button.tron_find, select.tron_mowing_mode
+- [x] lovelace/airseekers_tron_dashboard.yaml; tests updated to tron_* ids
+
+## Milestone v2 — Real cloud backend (IN PROGRESS)
+Discovery via PCAPdroid+mitmproxy on the owner's own account/network (see ADR-0008/0009, docs/api_mapping.md).
+- [x] Verified domains: `cloud-eu.airseekers-robotics.com` (REST) + AWS IoT (`*-ats.iot.eu-central-1.amazonaws.com`)
+- [x] Confirmed app pins certs; PCAPdroid (no-root VPN) successfully routes app traffic to mitmproxy
+- [ ] `apk-mitm` repackage of the AIRSEEKERS APK to defeat REST pinning → re-capture → decrypt REST
+- [ ] Fill `docs/api_mapping.md` endpoint table (login/refresh/devices/status/commands), anonymised
+- [ ] Implement `CloudHttpBackend` (REST + JWT, cloud_polling) + selectable backend; long idle poll (one-session caveat)
+- Out of scope: AWS IoT MQTT real-time (mutual TLS, per-device cert), WebRTC camera relay
+
+### Active capture environment (live)
+- mitmproxy: Docker container `airseekers-mitm` on `10.0.0.7` — SOCKS5 `:8080`, web UI `:8081` (pwd `airseekers`),
+  flows saved to `/home/vinok/mitm/airseekers_flows.mitm`, CA in `/home/vinok/mitm/`.
+- Phone (Android non-root, 10.0.0.71): PCAPdroid VPN → SOCKS5 10.0.0.7:8080, Block QUIC, mitmproxy CA installed.
+- **Next concrete step:** owner drops the APK in `/home/vinok/mitm/` → run apk-mitm (Docker node+java) → reinstall → re-capture.
+- Cleanup when done: `docker rm -f airseekers-mitm`; remove proxy + CA from phone.
 
 *Move items to `.planning/STATE.md` recent-activity when a phase closes; reset this file to the new phase.*

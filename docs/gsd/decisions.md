@@ -2,6 +2,24 @@
 
 Lightweight ADRs. Newest first. Status: ✅ accepted · 🔄 revisit · ⏳ pending.
 
+## ADR-0009 — Real backend = REST polling; AWS IoT real-time out of scope ✅
+**Context:** Live capture (PCAPdroid+mitmproxy, owner's account, 2026-06-18) verified two channels:
+`cloud-eu.airseekers-robotics.com` (REST) and `a26yx9tpysif9b-ats.iot.eu-central-1.amazonaws.com`
+(AWS IoT Core, MQTT). The AWS IoT channel uses **mutual TLS with a per-device client certificate**.
+**Decision:** Implement only `CloudHttpBackend` (REST + JWT, `cloud_polling`). Treat AWS IoT MQTT
+real-time push and WebRTC camera relay as **out of scope** for the integration.
+**Why:** Mutual-TLS MQTT requires the robot's private key — not legitimately/practically reusable by a
+third party. REST polling delivers state + commands, matching `iot_class: cloud_polling`.
+
+## ADR-0008 — De-pin via apk-mitm (no root) to read REST payloads ✅
+**Context:** The app pins its TLS certs; PCAPdroid routes traffic to mitmproxy but handshakes are
+refused, so REST payloads aren't decryptable. Owner has only a non-rooted Android.
+**Decision:** Repackage the APK with `apk-mitm` (trusts user CA / disables network-security pinning),
+reinstall, and re-capture. If native/renforced pinning defeats it → fall back to Frida or a rooted
+emulator.
+**Why:** Best no-root option to capture the REST endpoint/payloads needed to build `CloudHttpBackend`.
+
+
 ## ADR-0007 — Maintenance state via `Store` + `RestoreEntity`, not `timer` ⏳
 **Context:** Warranty dates, blade hours, mowing cycles are durable maintenance counters.
 **Decision:** Persist via `homeassistant.helpers.storage.Store` (the maintenance log + arming state) and
